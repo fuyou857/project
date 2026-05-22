@@ -1,0 +1,59 @@
+/* Tiptap 合同编辑器基础样式 */
+.contract-tiptap-editor .ProseMirror {
+  min-height: 220px;
+  outline: none;
+  padding: 0.75rem 1rem;
+  line-height: 1.65;
+}
+.contract-tiptap-editor .ProseMirror p {
+  margin: 0.35em 0;
+}
+.contract-tiptap-editor .ProseMirror h1,
+.contract-tiptap-editor .ProseMirror h2,
+.contract-tiptap-editor .ProseMirror h3 {
+  margin: 0.6em 0 0.35em;
+  font-weight: 600;
+}
+.contract-tiptap-editor .ProseMirror h1 {
+  font-size: 1.5rem;
+}
+.contract-tiptap-editor .ProseMirror h2 {
+  font-size: 1.25rem;
+}
+.contract-tiptap-editor .ProseMirror h3 {
+  font-size: 1.1rem;
+}
+.contract-tiptap-editor .ProseMirror ul,
+.contract-tiptap-editor .ProseMirror ol {
+  padding-left: 1.35rem;
+  margin: 0.35em 0;
+}
+.contract-tiptap-editor .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+  overflow: hidden;
+  table-layout: fixed;
+}
+.contract-tiptap-editor .ProseMirror td,
+.contract-tiptap-editor .ProseMirror th {
+  border: 1px solid #cbd5e1;
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+  position: relative;
+  min-width: 3rem;
+}
+.contract-tiptap-editor .ProseMirror th {
+  background: #f1f5f9;
+  font-weight: 600;
+}
+.contract-tiptap-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5em 0;
+}
+.contract-tiptap-editor .ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+}

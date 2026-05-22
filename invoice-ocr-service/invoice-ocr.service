@@ -1,0 +1,22 @@
+[Unit]
+Description=Invoice OCR Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/www/wwwroot/ciond/invoice-ocr-service
+EnvironmentFile=-/www/wwwroot/ciond/invoice-ocr-service/.env
+ExecStart=/www/wwwroot/ciond/invoice-ocr-service/run-prod.sh
+Restart=on-failure
+RestartSec=10
+# OCR 推理可能较慢，避免 systemd 误判超时杀进程
+TimeoutStartSec=300
+
+# 日志配置
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=invoice-ocr
+
+[Install]
+WantedBy=multi-user.target

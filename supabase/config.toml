@@ -1,0 +1,11 @@
+# Supabase CLI 本地配置（与 Dashboard 项目 ref 一致）
+# 用于：`supabase link` / `supabase functions deploy …`
+project_id = "wlkrdylgojkhgfzvcagc"
+
+# 用户名密码登录入口：调用方无 JWT，部署时须关闭校验（与 CLI --no-verify-jwt 等价）
+[functions.login]
+verify_jwt = false
+
+# ONLYOFFICE 文档服务器 POST 保存回调，无 Supabase 用户 JWT
+[functions.onlyoffice-callback]
+verify_jwt = false

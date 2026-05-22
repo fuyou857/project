@@ -1,0 +1,44 @@
+---
+description: 全站 UI 体系（设计令牌、表单、表格、选择器）。新增页面与功能须遵守。
+globs: src/**/*.tsx,src/**/*.css,tailwind.config.js
+---
+
+# 建筑工程管理系统 — UI 实施规范
+
+## 设计令牌
+
+- **字体与层级**：使用 Tailwind 扩展字号 `text-display` / `text-title` / `text-body` / `text-caption`（见 `tailwind.config.js`）。页面主标题用 `ui-page-title`；模块标题用 `ui-section-title`。
+- **表面色**：主内容背景 `bg-surface-page`；卡片 `ui-card` 或 `bg-white` + `border-gray-200`。
+- **表单控件**：输入类统一 `ui-input`（见 `src/styles/index.css` `@layer components`）。标签用 `ui-label`。
+- **数字列**：金额与数量使用 `tabular-nums`（可用工具类 `ui-numeric`）。
+
+## 禁止原生 `<select>`
+
+- **不得**在业务表单与筛选条中新增原生 `<select>`。
+- **长列表 / 级联 / 搜索**：使用 `SearchableSelect`（`src/components/ui/SearchableSelect.tsx`），桌面端下拉 + 移动端底部抽屉；选项用 `useMemo` 构建。
+- **2～6 个固定枚举**：使用 `SegmentedControl`（`src/components/ui/SegmentedControl.tsx`）。
+- **项目 / 合同选项**：优先使用 `projectSelectOptions`、`contractSelectOptions`（`src/components/ui/options.ts`）。
+
+## 布局与表格
+
+- 主内容区宽度由 `Layout` 内 `ui-main-inner`（`max-w-content`）约束；新页面勿再包一层全宽无意义容器。
+- 列表表格优先复用 `ResponsiveTable`；需自定义表格时，行高应响应 **用户菜单 → 表格行高（标准/紧凑）**，通过 `useUiPreferences()` 的 `tableCellClass` / `tableHeadCellClass`。
+- 空列表使用 `EmptyState`（`src/components/ui/EmptyState.tsx`）。
+
+## 参考实现
+
+- `src/pages/contract/IncomeContractList.tsx` — 项目 `SearchableSelect` + 状态 `SegmentedControl`
+- `src/pages/Warnings.tsx` — 筛选 `SegmentedControl`
+- `src/pages/PartyA.tsx` — 单位类型 `SegmentedControl` + 空状态
+
+## 待扫尾（若仍存在 `<select>`）
+
+在 `src` 下执行 `rg '<select' src` 复查。当前 React 源码树内应无业务 `<select>`；若出现新的匹配，按本规范改为 `SearchableSelect` / `SegmentedControl`。
+
+仓库内 `src/main/resources/static/index.html` 仍为独立静态页，其原生 `<select>` 不在本规范 `globs` 强制范围内，可按需单独改造。
+
+## 量化验收（UAT）
+
+- 会话内事件写入 `sessionStorage`（见 `src/utils/uiMetrics.ts`），控制台执行 `window.__CIOND_EXPORT_UI_METRICS__()` 可导出 JSON。
+- 关注事件：`select_panel_open`、`select_value_commit`、`segmented_change`；`context` 应能区分页面与控件（如 `page:receipt_registration:filter_project`）。
+- 扫尾目标：`rg '<select' src` 在业务代码中无匹配（或仅剩明确例外）。

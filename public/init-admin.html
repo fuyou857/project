@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员初始化（仅服务端）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1e293b; }
+    code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>管理员初始化已迁移至服务端</h1>
+  <p>本页面不再执行任何数据库或 Auth 操作，也不在浏览器中加载密钥。</p>
+  <p>请在<strong>受信任的服务器或本机终端</strong>运行：</p>
+  <pre>export SUPABASE_URL="https://your-project.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
+export INIT_ADMIN_EMAIL="admin@example.com"
+export INIT_ADMIN_PASSWORD="your-secure-password"
+export INIT_ADMIN_USERNAME="admin"
+node scripts/init-admin.js</pre>
+  <p>密钥变量说明见项目根目录 <code>.env.example</code>（不要将 Service Role 提交到仓库或写入前端代码）。</p>
+</body>
+</html>

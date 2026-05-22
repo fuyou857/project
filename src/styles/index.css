@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ui-radius: 0.75rem;
+    --ui-border: 214 32% 91%;
+    --ui-ring: 217 91% 60%;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply font-sans text-body text-gray-900 bg-surface-page;
+  }
+}
+
+@layer components {
+  .ui-page-title {
+    @apply text-display font-semibold text-gray-900;
+  }
+
+  .ui-card {
+    @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm;
+  }
+
+  .ui-section-title {
+    @apply text-title font-semibold text-gray-800;
+  }
+
+  .ui-label {
+    @apply text-caption text-gray-600;
+  }
+
+  .ui-input {
+    @apply rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25;
+  }
+
+  .ui-table-wrap {
+    @apply overflow-x-auto rounded-xl border border-gray-200 bg-white;
+  }
+
+  .ui-numeric {
+    @apply text-right tabular-nums;
+  }
+
+  .ui-main-inner {
+    @apply mx-auto w-full max-w-content flex-1 px-4 py-4 sm:px-5;
+  }
+
+  .cost-invoice-preview img {
+    @apply shadow-md rounded-sm;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 响应式样式 - 移动端适配 */
+@media (max-width: 1024px) {
+  .sidebar-hidden {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-scroll-container {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-table-wrapper table {
+    min-width: 800px;
+  }
+
+  .mobile-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+  }
+}
+
+/* 确保按钮在移动端足够大容易点击 */
+@media (max-width: 640px) {
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 任务列表：紧急优先级行闪烁描边 */
+@keyframes task-urgent-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px #ff4d4f;
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px #ff7875;
+  }
+}
+
+.task-row-urgent {
+  animation: task-urgent-pulse 1.5s ease-in-out infinite;
+}

@@ -1,0 +1,42 @@
+services:
+  # ONLYOFFICE 文档服务器（合同预览嵌入编辑器）。默认不启动，避免占用内存；需要时：
+  #   docker compose --profile onlyoffice up -d
+  # 启动后本机 http://127.0.0.1:8080 即文档服务根（与 .env 中 ONLYOFFICE_DOCUMENT_SERVER_URL=http://localhost:8080 对应）。
+  # 生产环境请用 Nginx HTTPS 反代，见 scripts/nginx-onlyoffice-proxy.conf.example。
+  onlyoffice-documentserver:
+    profiles:
+      - onlyoffice
+    image: docker.m.daocloud.io/onlyoffice/documentserver:8.2.2
+    container_name: ciond-onlyoffice-documentserver
+    restart: unless-stopped
+    ports:
+      - "${ONLYOFFICE_HOST_PORT:-8080}:80"
+    environment:
+      # 与前端 OnlyOfficeEditor 当前实现一致：未传 JWT 时须关闭，否则无法加载编辑器
+      JWT_ENABLED: ${ONLYOFFICE_JWT_ENABLED:-false}
+      JWT_SECRET: ${ONLYOFFICE_JWT_SECRET:-}
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_log:/var/log/onlyoffice
+    # 官方建议宿主机 ≥4GB 可用内存；不足时可能启动慢或转换失败
+
+  # 转换服务监听 8788。Supabase 云端 Edge 不可使用 http://contract-convert:8788 作为 DOC_CONVERT_SERVICE_BASE_URL，
+  # 须通过公网 Nginx 反代（见 scripts/nginx-contract-convert-proxy.conf）。
+  contract-convert:
+    build:
+      context: ./contract-convert-service
+      args:
+        # 中国大陆直连 docker.io 常超时；在 .env 设置 CONTRACT_CONVERT_BASE_IMAGE 覆盖，例如：
+        # CONTRACT_CONVERT_BASE_IMAGE=docker.m.daocloud.io/library/python:3.11-slim-bookworm
+        BASE_IMAGE: ${CONTRACT_CONVERT_BASE_IMAGE:-docker.io/library/python:3.11-slim-bookworm}
+        # 若阿里云 apt 仍慢，在 .env 设置：DEBIAN_APT_HOST=mirrors.tuna.tsinghua.edu.cn
+        DEBIAN_APT_HOST: ${DEBIAN_APT_HOST:-mirrors.aliyun.com}
+    ports:
+      - "8788:8788"
+    environment:
+      CONTRACT_CONVERT_SECRET: ${CONTRACT_CONVERT_SECRET:-}
+    restart: unless-stopped
+
+volumes:
+  onlyoffice_data:
+  onlyoffice_log:

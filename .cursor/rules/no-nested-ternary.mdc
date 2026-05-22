@@ -1,0 +1,47 @@
+---
+description: 禁止嵌套三元运算，保持条件分支可读
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: true
+---
+
+# 禁止嵌套三元运算
+
+项目中禁止使用**多层嵌套**的三元表达式（`a ? b ? c : d : e` 或等价写法）。该写法可读性差，不利于维护。
+
+## 推荐写法
+
+**赋值 / 返回值**：使用 `if` / `else if` / `else`：
+
+```typescript
+// ❌ BAD
+const label = s === 'a' ? '甲' : s === 'b' ? '乙' : '其他';
+
+// ✅ GOOD
+let label: string;
+if (s === 'a') label = '甲';
+else if (s === 'b') label = '乙';
+else label = '其他';
+```
+
+**JSX 渲染**：提取为内联 IIFE 或独立函数 / 变量：
+
+```tsx
+// ❌ BAD
+{loading ? <Spinner /> : items.length === 0 ? <Empty /> : <List />}
+
+// ✅ GOOD
+{(() => {
+  if (loading) return <Spinner />;
+  if (items.length === 0) return <Empty />;
+  return <List />;
+})()}
+```
+
+## 允许
+
+- 单层三元：`ok ? '是' : '否'`
+- 空值合并：`value ?? default`（非三元嵌套）
+
+## 校验
+
+`npm run lint` 已启用 ESLint 规则 `no-nested-ternary`。

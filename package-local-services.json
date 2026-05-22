@@ -1,0 +1,14 @@
+{
+  "name": "contract-document-convert-local",
+  "version": "1.0.0",
+  "description": "本地合同文档转换服务",
+  "main": "contract-document-convert-local.js",
+  "scripts": {
+    "start": "node contract-document-convert-local.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "express": "^4.21.2",
+    "node-fetch": "^2.6.7"
+  }
+}

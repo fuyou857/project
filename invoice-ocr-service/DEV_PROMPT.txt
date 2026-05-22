@@ -1,0 +1,31 @@
+# 发票OCR服务开发提示
+
+## 技术栈
+- Python + FastAPI
+- 腾讯云OCR服务（云端API调用）
+
+## 架构
+- config.py: 配置层（腾讯云密钥、超时、重试策略）
+- image_utils.py: 图片工具层（预处理、压缩、Base64转换）
+- tencent_ocr.py: OCR请求层（调用腾讯云API）
+- invoice_parser.py: 结果解析层（字段映射）
+- main.py: 接口服务层（REST API）
+
+## 运行命令
+开发环境: ./run-prod.sh
+生产环境: systemctl start invoice-ocr
+
+## 接口
+POST /api/invoice/ocr - 发票识别
+GET /health - 健康检查
+GET /metrics - 监控指标
+
+## 注意事项
+- 需要配置腾讯云密钥（TENCENTCLOUD_SECRET_ID/SECRET_KEY）
+- 确保服务器能访问腾讯云API
+- 注意API调用费用
+
+## 故障排查
+1. 检查配置文件 .env
+2. 查看服务日志 journalctl -u invoice-ocr
+3. 验证腾讯云密钥权限

@@ -1,0 +1,11 @@
+# Docker 镜像使用 Python 3.11：以下版本带 manylinux wheel，避免容器内 gcc 编译失败。
+# 勿用 uvicorn[standard]，否则会拉 httptools 等需本地编译的依赖。
+fastapi==0.68.2
+uvicorn==0.15.0
+httpx==0.18.2
+PyPDF2==2.12.1
+python-docx==0.8.11
+docxtpl==0.16.7
+Pillow==10.4.0
+PyMuPDF==1.24.14
+mammoth==1.6.0

@@ -1,0 +1,53 @@
+---
+description: 重复代码整改原则与优先范围（纯结构优化，不改业务逻辑）
+alwaysApply: true
+---
+
+# 重复代码（重复线路）整改规范
+
+## 核心原则（必须遵守）
+
+1. **绝不影响项目正常运行**
+2. **绝不修改业务逻辑**
+3. **绝不改变页面展示、数据、交互**
+4. **只做抽取、复用、封装** — 不改动执行逻辑
+
+## 整改要求
+
+- 将重复代码块提取为公共组件、函数、Hook、工具类
+- 所有重复页面/组件统一调用公共封装，删除冗余实现
+- 重构前后业务行为、返回值、渲染效果 **100% 一致**
+- 优先处理重复率 **> 40%** 的文件，再逐步清理低重复代码
+- **禁止复制粘贴** 已有公共逻辑；新功能必须先查 `src/components`、`src/hooks`、`src/utils`、`src/services`
+
+## 优先整改范围
+
+| 优先级 | 模块 |
+|--------|------|
+| P0 | `ExpenseContractList` / `IncomeContractList` |
+| P0 | 结算、变更、抵扣、补充协议（`Expense*` / `Income*` 成对页面） |
+| P1 | 甲方/乙方选择器、签章单元选择器 |
+| P1 | `contractDocumentConvertService` 及相关转换逻辑 |
+| P1 | `invoiceOcrService` 及发票录入 OCR 流程 |
+
+## 执行标准
+
+1. 抽取公共模块后删除重复实现
+2. 自测：功能正常、无报错、无样式错乱
+3. 重复线路扫描告警清零（或显著下降）
+4. PR 说明须列出「抽取点」与「行为不变」依据
+
+## 已有公共能力（优先复用）
+
+- `useCompanyScope()` + `collectCompanyIds()`：公司范围（替代各页 `getCompanyIds`）
+- `useContractSideList()`：合同子业务列表 fetchContracts + fetchList
+- `CONTRACT_SIDE_TABLES`：支出/收入子业务表名常量
+- `contractSubPage` / `contractSubPageHelpers`：必填校验、审批、筛选、合同名解析
+- `sessionUser.isSuperAdminUser()`：列表页超管判断（localStorage）
+- `useAuth().isSuperAdmin`：经服务端校验的超管
+- `ContractReminderDetailModal`：合同提醒详情弹窗
+- `ExpenseSettlementAmountSummary`：支出结算金额汇总块
+
+## 极简版（团队通知）
+
+为降低维护成本、减少 BUG 风险，在**不影响运行、不改变任何功能**的前提下，对项目内重复代码进行结构优化：重复逻辑抽取为公共工具/组件，多处复用并删除冗余，确保功能不变、代码更整洁、后期更易维护。
