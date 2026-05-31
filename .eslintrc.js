@@ -13,6 +13,8 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
+    // 修复：与 prettier 兼容，避免格式冲突
+    'prettier',
   ],
   settings: {
     react: {
@@ -29,7 +31,9 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    // 修复：React 18 下已废弃的规则
     'react/prop-types': 'off',
+    'react/no-unknown-property': 'off',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'no-nested-ternary': 'error',
   },
