@@ -1,0 +1,49 @@
+# ciond-deploy-agent.service — 部署 Webhook 监听服务
+#
+# 安装:
+#   sudo cp scripts/ciond-deploy-agent.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable ciond-deploy-agent
+#   sudo systemctl start ciond-deploy-agent
+#
+# 配置安全密钥:
+#   echo -n 'your-very-long-random-secret-here' > /www/wwwroot/ciond/.deploy-agent.secret
+#   chmod 600 /www/wwwroot/ciond/.deploy-agent.secret
+#   sudo systemctl restart ciond-deploy-agent
+#
+# 查看状态:
+#   sudo systemctl status ciond-deploy-agent
+#   journalctl -u ciond-deploy-agent -f
+#
+# 触发部署:
+#   SECRET=$(cat /www/wwwroot/ciond/.deploy-agent.secret)
+#   curl -X POST http://localhost:18900/deploy \
+#     -H "Authorization: Bearer $SECRET" \
+#     -H "Content-Type: application/json" \
+#     -d '{"ref":"refs/heads/master"}'
+
+[Unit]
+Description=CIOND Deploy Agent — Webhook-triggered automated deployment
+Documentation=https://www.ciond.com
+After=network.target nginx.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/www/wwwroot/ciond
+ExecStart=/usr/bin/node /www/wwwroot/ciond/scripts/deploy-agent.mjs
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment=NODE_ENV=production
+Environment=DEPLOY_AGENT_PORT=18903
+# 密钥通过独立文件注入（不要写在 service 里）
+EnvironmentFile=/www/wwwroot/ciond/.deploy-agent.env
+# OOM 保护
+Environment=NODE_OPTIONS=--max-old-space-size=512
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

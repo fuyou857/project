@@ -20,6 +20,7 @@ import type { ProjectMemberUserOption } from './ProjectForm';
 import { addLog, logModule, logAction } from '../../services/logService';
 import { getUsers } from '../../services/userService';
 import { useSingleToast } from '../../hooks/useSingleToast';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import SingleToastBanner from '../../components/ui/SingleToastBanner';
 
 interface ImportRow {
@@ -42,6 +43,7 @@ export default function Projects() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function Projects() {
 
   useEffect(() => {
     fetchData();
-  }, [page, search, currentCompany]);
+  }, [page, debouncedSearch, currentCompany]);
 
   async function fetchPartyAList() {
     const companyIds = getCompanyIds();
@@ -101,9 +103,9 @@ export default function Projects() {
     if (partyAData) {
       // 去重并提取party_a数据
       const uniquePartyA = Array.from(new Map(
-        partyAData.map(item => [item.party_a.id, item.party_a])
+        partyAData.map(item => [(item.party_a as unknown as PartyA).id, item.party_a as unknown as PartyA])
       )).map(([_, partyA]) => partyA);
-      setPartyAList(uniquePartyA as PartyA[]);
+      setPartyAList(uniquePartyA);
     }
   }
 
@@ -117,8 +119,8 @@ export default function Projects() {
       .order('created_at', { ascending: false })
       .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,project_code.ilike.%${search}%,project_manager.ilike.%${search}%`);
+    if (debouncedSearch) {
+      query = query.or(`name.ilike.%${debouncedSearch}%,project_code.ilike.%${debouncedSearch}%,project_manager.ilike.%${debouncedSearch}%`);
     }
 
     const { data: result, count } = await query;
@@ -492,7 +494,7 @@ export default function Projects() {
           .order('party_a.name');
         // 去重并提取party_a数据
         const uniquePartyA = Array.from(new Map(
-          partyAData?.map(item => [item.party_a.id, item.party_a]) || []
+          partyAData?.map(item => [(item.party_a as unknown as PartyA).id, item.party_a as unknown as PartyA]) || []
         )).map(([_, partyA]) => partyA);
         const partyAMap = new Map((uniquePartyA || []).map(p => [p.name, p.id]));
         

@@ -11,24 +11,22 @@
 #
 # 依赖：supabase/functions 须指向仓库根目录的 functions/（见 supabase/functions → ../functions）。
 #
-# USE_GLOBAL_SUPABASE_CLI=1 时使用 PATH 中的全局 `supabase`。
-# 默认使用 node_modules/supabase/bin/supabase；若遇「Text file busy」，会复制到 /tmp 再执行。
+# 默认使用 node_modules/supabase/bin/supabase（勿设 USE_GLOBAL_SUPABASE_CLI=1，/root/go/bin 旧版会误报 token 格式错误）。
+# 先检查令牌: bash scripts/check-supabase-token.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=lib/supabase-cli.sh
+source "$ROOT/scripts/lib/supabase-cli.sh"
 
-if [[ -n "${SUPABASE_ACCESS_TOKEN:-}" ]]; then
-  case "$SUPABASE_ACCESS_TOKEN" in
-    sbp_*) ;;
-    *)
-      echo "[deploy-edge] 环境变量 SUPABASE_ACCESS_TOKEN 格式无效：须为 Dashboard → Account → Access Tokens 生成的「Personal Access Token」，以 sbp_ 开头。" >&2
-      echo "[deploy-edge] 请勿使用项目的 anon key、service_role JWT 或其它字符串。" >&2
-      echo "[deploy-edge] 修正方式其一：unset SUPABASE_ACCESS_TOKEN 后在本机执行 supabase login" >&2
-      echo "[deploy-edge] 修正方式其二：export SUPABASE_ACCESS_TOKEN='sbp_你的新令牌'" >&2
-      exit 1
-      ;;
-  esac
+load_supabase_access_token_from_file "${SUPABASE_TOKEN_FILE:-/tmp/sbp.token}"
+if [[ -z "${SUPABASE_ACCESS_TOKEN:-}" ]]; then
+  echo "[deploy-edge] 未设置 SUPABASE_ACCESS_TOKEN。请先:" >&2
+  echo "  export SUPABASE_ACCESS_TOKEN='sbp_…'  或  nano /tmp/sbp.token" >&2
+  echo "  bash scripts/check-supabase-token.sh" >&2
+  exit 1
 fi
+validate_supabase_access_token deploy-edge || exit 1
 
 if [[ ! -f supabase/config.toml ]]; then
   echo "[deploy-edge] 缺少 supabase/config.toml" >&2
@@ -47,6 +45,7 @@ DEFAULT_FUNCS=(
   admin-user-ops
   api-key-ops
   wechat-work-ops
+  wechat-work-auth
   warning-generator
   project-delete-check
   login
@@ -66,33 +65,15 @@ for name in "${FUNCS[@]}"; do
   fi
 done
 
-run_supabase() {
-  if [[ "${USE_GLOBAL_SUPABASE_CLI:-0}" == "1" ]] && command -v supabase >/dev/null 2>&1; then
-    echo "[deploy-edge] 使用全局: supabase $*"
-    supabase "$@"
-    return
-  fi
-  LOCAL_BIN="$ROOT/node_modules/supabase/bin/supabase"
-  if [[ -f "$LOCAL_BIN" ]] && [[ -r "$LOCAL_BIN" ]]; then
-    TMPBIN="/tmp/ciond-supabase-cli-$$"
-    /bin/cp -f "$LOCAL_BIN" "$TMPBIN"
-    chmod +x "$TMPBIN"
-    echo "[deploy-edge] 使用本地 CLI（/tmp 副本）: $*"
-    set +e
-    "$TMPBIN" "$@"
-    R=$?
-    set -e
-    rm -f "$TMPBIN"
-    return "$R"
-  fi
-  echo "[deploy-edge] 未找到 node_modules/supabase/bin/supabase，请先执行: npm install" >&2
-  echo "[deploy-edge] 或安装全局 CLI 后: USE_GLOBAL_SUPABASE_CLI=1 bash $0" >&2
-  exit 1
-}
-
 for name in "${FUNCS[@]}"; do
   echo "[deploy-edge] --- deploy $name ---"
-  run_supabase functions deploy "$name" --project-ref "$PROJECT_REF"
+  extra=()
+  case "$name" in
+    login|wechat-work-auth|onlyoffice-callback|admin-user-ops|api-key-ops)
+      extra+=(--no-verify-jwt)
+      ;;
+  esac
+  run_supabase_cli functions deploy "$name" --project-ref "$PROJECT_REF" "${extra[@]}"
 done
 
 echo "[deploy-edge] 全部完成: ${FUNCS[*]}"

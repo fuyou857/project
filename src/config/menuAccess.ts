@@ -88,6 +88,13 @@ export function expandPermissionKeys(raw: Iterable<string>): Set<string> {
     s.add('消息中心');
     s.add('任务统计');
   }
+  /** 机械管理模块：始终开放所有子权限 */
+  const machineKeys = TOP_PATH_REQUIRES_ANY_PERM['/machines'];
+  if (machineKeys?.length) {
+    for (const k of machineKeys) {
+      s.add(k);
+    }
+  }
   /**
    * 具备任一「合同管理」子权限（不含单独勾选「合同模板库」）时，同步开放「合同模板库」键，
    * 与收入/支出合同工作流衔接；权限键仍存为「合同模板库」，角色分配与 RLS 语义不变。
@@ -121,6 +128,8 @@ export function canShowTopMenuPath(
   if (menuPath === '/base-data') return true;
   // 任务管理：与基础数据一致，顶层始终显示；子页由路由守卫要求「任一类任务权限」
   if (menuPath === '/tasks') return true;
+  // 机械管理：始终允许访问
+  if (menuPath === '/machines') return true;
   if (mergedPerms.size === 0) return false;
   const required = TOP_PATH_REQUIRES_ANY_PERM[menuPath];
   if (!required?.length) return true;
@@ -134,6 +143,9 @@ export function canShowChildMenuItem(
   mergedPerms: Set<string>
 ): boolean {
   if (isSuperAdmin) return true;
+  // 机械管理子菜单：始终允许访问
+  const machineMenuKeys = ['机械台账', '机械报表', '机械台班', '机械管理'];
+  if (machineMenuKeys.includes(permissionKey)) return true;
   if (mergedPerms.size === 0) return false;
   return mergedPerms.has(permissionKey);
 }

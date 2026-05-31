@@ -209,7 +209,7 @@ export default function UninvoicedPayments() {
         invoice_number: recordForm.invoice_number,
         invoice_amount: recordForm.invoice_amount,
         invoice_date: recordForm.invoice_date,
-        ...costInvoicePaymentWritePayload(recordForm.invoice_amount, 0)
+        ...costInvoicePaymentWritePayload(recordForm.invoice_amount ?? 0, 0)
       }).select().maybeSingle();
 
       if (invoiceError) {

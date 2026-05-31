@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaDownload, FaListUl, FaSave } from 'react-icons/fa';
+import { FaArrowLeft, FaDownload, FaListUl, FaSave, FaSync } from 'react-icons/fa';
 import { saveAs } from 'file-saver';
-import OnlyOfficeEditor, { preloadOnlyOfficeEnvironment } from '../../components/contract/OnlyOfficeEditor';
+import OnlyOfficeEditorLazy, { preloadOnlyOfficeEnvironment } from '../../components/contract/OnlyOfficeEditorLazy';
 import {
   getGeneratedContract,
   type GeneratedContract,
 } from '../../services/contractGenerationService';
 import { preferSignedStorageUrlWithHint } from '../../utils/contractDocxStorageFetch';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import type { DraftEditorLocationState } from './draftEditorLocationState';
 
 function GeneratedContractDraftEditorPage() {
@@ -20,6 +21,8 @@ function GeneratedContractDraftEditorPage() {
   const [urlHint, setUrlHint] = useState<string | null>(navState?.urlHint ?? null);
   const [loading, setLoading] = useState(!navState?.documentUrl?.trim());
   const [err, setErr] = useState<string | null>(null);
+  const [showSaveHint, setShowSaveHint] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     preloadOnlyOfficeEnvironment();
@@ -82,11 +85,19 @@ function GeneratedContractDraftEditorPage() {
   };
 
   const handleSaveHint = () => {
-    window.alert(
-      '正在编辑的是合同草稿副本，不会修改系统模板原文件。\n\n' +
-        '请在 ONLYOFFICE 内使用「保存」或等待自动保存；保存结果会写回本合同的 Storage 路径。\n' +
-        '关闭本页后可在「我生成的合同」列表中查看该草稿（状态：草稿）。',
-    );
+    setShowSaveHint(true);
+  };
+
+  const handleRefreshDocument = async () => {
+    if (!contractId || !contract?.generated_docx_storage_path) return;
+    try {
+      const { url } = await preferSignedStorageUrlWithHint(contract.generated_docx_storage_path);
+      setDocumentUrl(url);
+      setRefreshNonce((n) => n + 1);
+      setUrlHint(null);
+    } catch (e: unknown) {
+      setErr((e as Error)?.message || '刷新文档链接失败');
+    }
   };
 
   const callbackQuery = contractId ? `generated_contract_id=${contractId}` : undefined;
@@ -146,6 +157,15 @@ function GeneratedContractDraftEditorPage() {
             <FaSave className="mr-2 shrink-0" />
             保存说明
           </button>
+          <button
+            type="button"
+            className="inline-flex items-center px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            onClick={() => void handleRefreshDocument()}
+            title="重新获取文档访问链接（签名 URL 过期后可点此刷新）"
+          >
+            <FaSync className="mr-2 shrink-0" />
+            刷新文档链接
+          </button>
         </div>
       </div>
 
@@ -168,10 +188,11 @@ function GeneratedContractDraftEditorPage() {
           </div>
         ) : null}
         {showEditorShell ? (
-          <OnlyOfficeEditor
+          <OnlyOfficeEditorLazy
+            key={`${contractId}-${refreshNonce}`}
             documentUrl={documentUrl}
             documentTitle={`${contract?.contract_no || '合同草稿'}.docx`}
-            documentKey={contractId}
+            documentKey={`${contractId}-${refreshNonce}`}
             onlyOfficeCallbackQuery={callbackQuery}
             height="700px"
             forceViewMode={false}
@@ -181,6 +202,16 @@ function GeneratedContractDraftEditorPage() {
           <p className="text-sm text-gray-500 py-16 text-center">无法加载合同 Word 副本</p>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        isOpen={showSaveHint}
+        onClose={() => setShowSaveHint(false)}
+        onConfirm={() => setShowSaveHint(false)}
+        title="保存说明"
+        message="正在编辑的是合同草稿副本，不会修改系统模板原文件。请在 ONLYOFFICE 内使用「保存」或等待自动保存；保存结果会写回本合同的 Storage 路径。关闭本页后可在「我生成的合同」列表中查看该草稿（状态：草稿）。"
+        confirmText="知道了"
+        type="info"
+      />
     </div>
   );
 }

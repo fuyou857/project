@@ -75,11 +75,18 @@ import {
 import ContractPreviewModal from '../../components/ContractPreviewModal';
 import DocxStoragePreview from '../../components/contract/DocxStoragePreview';
 import GeneratedContractRichWorkspace from '../../components/contract/GeneratedContractRichWorkspace';
-import { preloadOnlyOfficeEnvironment } from '../../components/contract/OnlyOfficeEditor';
+import { preloadOnlyOfficeEnvironment } from '../../components/contract/OnlyOfficeEditorLazy';
 import type { DraftEditorLocationState } from './draftEditorLocationState';
+import { Skeleton } from '../../components/ui';
 import TemplateVariableImageField from '../../components/contract/TemplateVariableImageField';
+import TrashTable from '../../components/contract/TrashTable';
+import MyGeneratedTable from '../../components/contract/MyGeneratedTable';
+import GenDetailPanel from '../../components/contract/GenDetailPanel';
+import ContractTemplateFilters from '../../components/contract/ContractTemplateFilters';
 import { SearchableSelect, SegmentedControl } from '../../components/ui';
 import { optionsFromTuples, projectSelectOptions } from '../../components/ui/options';
+import { errorMessageFromUnknown as baseErrorMsg } from '../../utils/httpErrorMessage';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 /**
  * 生成安全的对象存储文件名
@@ -149,12 +156,7 @@ function trashCompositeToApi(composite: TrashCompositeSort): {sortKey: Generated
 }
 
 function useDebounced<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(value), delayMs);
-    return () => window.clearTimeout(t);
-  }, [value, delayMs]);
-  return debounced;
+  return useDebouncedValue(value, delayMs);
 }
 
 function categoryTrailForLeaf(cats: TemplateCategory[], leafId: string): TemplateCategory[] {
@@ -190,20 +192,19 @@ function appendErrorHint(message: string): string {
 }
 
 function errorMessageFromUnknown(e: unknown, fallback: string): string {
-  const msg =
-  e && typeof e === 'object' && 'message' in e ? String((e as {message: unknown;}).message) : String(e);
-  return appendErrorHint(msg && msg !== 'undefined' ? msg : fallback);
+  const msg = baseErrorMsg(e, '');
+  return appendErrorHint(msg || fallback);
 }
 
 type MyGenSortField = 'created_at' | 'updated_at' | 'contract_no' | 'status';
 
 function statusBadgeClass(status: string): string {
   const s = (status || '').toLowerCase();
-  if (s === 'draft') return 'bg-slate-100 text-slate-800 border border-slate-200';
-  if (s === 'contract_final') return 'bg-blue-50 text-blue-900 border border-blue-200';
-  if (s === 'published' || s === 'sealed') return 'bg-emerald-50 text-emerald-800 border border-emerald-200';
-  if (s === 'archived') return 'bg-gray-100 text-gray-600 border border-gray-200';
-  return 'bg-amber-50 text-amber-900 border border-amber-200';
+  if (s === 'draft') return 'badge-neutral';
+  if (s === 'contract_final') return 'badge-info';
+  if (s === 'published' || s === 'sealed') return 'badge-success';
+  if (s === 'archived') return 'badge-neutral opacity-70';
+  return 'badge-warning';
 }
 
 /** 模板状态：列表/徽章旁展示中文 */
@@ -1209,138 +1210,50 @@ export default function ContractTemplateLibraryPage() {
           </p>
         </div>
         
-        <div className="flex flex-col gap-4 mb-6 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end w-full">
-            <div className="lg:col-span-2 flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">一级类别</label>
-              <SearchableSelect
-                value={filterL1}
-                onChange={(v) => {
-                  setFilterL1(v);
-                  setFilterL2('');
-                }}
-                options={hubFilterL1Options}
-                placeholder="全部"
-                searchPlaceholder="搜索一级…"
-                searchThreshold={99} />
-              
-            </div>
-            <div className="lg:col-span-2 flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">二级类别</label>
-              <SearchableSelect
-                value={filterL2}
-                disabled={!filterL1}
-                onChange={(v) => {
-                  setFilterL2(v);
-                }}
-                options={hubFilterL2Options}
-                placeholder="全部（该一级下）"
-                searchPlaceholder="搜索二级…"
-                searchThreshold={99} />
-              
-            </div>
-            <div className="lg:col-span-6 flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">关键字（标题/说明全文检索 + 变量名）</label>
-              <input
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-                placeholder="多词用空格分词，如：分包 付款"
-                value={hubSearch}
-                onChange={(e) => setHubSearch(e.target.value)} />
-              
-            </div>
-            <div className="lg:col-span-2 flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">排序</label>
-              <SearchableSelect
-                value={`${hubSortField}:${hubSortAsc ? 'asc' : 'desc'}`}
-                onChange={(v) => {
-                  const [f, o] = v.split(':');
-                  setHubSortField(f as TemplateLibrarySortField);
-                  setHubSortAsc(o === 'asc');
-                }}
-                options={hubSortComboOptions}
-                placeholder="排序"
-                searchPlaceholder="搜索排序…"
-                searchThreshold={99} />
-              
-            </div>
-          </div>
-          {filterL1 || filterL2 || hubSearch.trim() ?
-          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-              <span className="text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 max-w-[min(100%,42rem)] leading-snug">
-                列表正在筛选中。新建模板若未出现在本页，请先点「清除筛选」或确认二级分类与模板一致。
-              </span>
-              <button
-              type="button"
-              className="shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 font-medium"
-              onClick={() => {
-                setFilterL1('');
-                setFilterL2('');
-                setHubSearch('');
-                setHubPage(0);
-              }}>
-              
-                清除筛选
-              </button>
-            </div> :
-          null}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
-              <label className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-amber-200 bg-amber-50 text-amber-900 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300"
-                  checked={hubShowTrash}
-                  onChange={(e) => setHubShowTrash(e.target.checked)} />
-                
-                查看回收站
-              </label>
-              {isSuperAdmin && (
-                <button
-                type="button"
-                onClick={() => {
-                  setModalFilterL1('');
-                  setModalFilterL2('');
-                  setNewTplLeafId('');
-                  setNewTplTitle('');
-                  setNewTplDescription('');
-                  setNewTplModalOpen(true);
-                }}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700">
-                
-                <FaPlus /> 新建模板
-              </button>
-              )}
-              {isSuperAdmin ?
-              <button
-                type="button"
-                onClick={() => {
-                  setAdminParentCatId('');
-                  setAdminOpen(true);
-                }}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-50">
-                
-                  管理分类
-                </button> :
-              null}
-              <button
-                type="button"
-                onClick={() =>
-                void (async () => {
-                  await reloadCats();
-                  await loadHub();
-                })()
-                }
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-white border border-gray-300">
-                
-                <FaSync /> 刷新
-              </button>
-            </div>
-            <p className="text-sm text-gray-600">共 {hubTotal} 个模板</p>
-          </div>
-        </div>
+        <ContractTemplateFilters
+          filterL1={filterL1}
+          filterL2={filterL2}
+          hubSearch={hubSearch}
+          hubSortField={hubSortField}
+          hubSortAsc={hubSortAsc}
+          hubShowTrash={hubShowTrash}
+          hubFilterL1Options={hubFilterL1Options}
+          hubFilterL2Options={hubFilterL2Options}
+          hubSortComboOptions={hubSortComboOptions}
+          isSuperAdmin={isSuperAdmin}
+          hasActiveFilters={Boolean(filterL1 || filterL2 || hubSearch.trim())}
+          onFilterL1Change={(v) => setFilterL1(v)}
+          onFilterL2Change={(v) => setFilterL2(v)}
+          onSearchChange={(v) => setHubSearch(v)}
+          onSortChange={(field, asc) => {
+            setHubSortField(field as TemplateLibrarySortField);
+            setHubSortAsc(asc);
+          }}
+          onShowTrashChange={(v) => setHubShowTrash(v)}
+          onClearFilters={() => {
+            setFilterL1('');
+            setFilterL2('');
+            setHubSearch('');
+            setHubPage(0);
+          }}
+          onNewTemplate={() => {
+            setModalFilterL1('');
+            setModalFilterL2('');
+            setNewTplLeafId('');
+            setNewTplTitle('');
+            setNewTplDescription('');
+            setNewTplModalOpen(true);
+          }}
+          onManageCategories={() => {
+            setAdminParentCatId('');
+            setAdminOpen(true);
+          }}
+          onRefresh={() => void (async () => { await reloadCats(); await loadHub(); })()}
+        />
+        <p className="text-sm text-gray-600">共 {hubTotal} 个模板</p>
 
         {loadingCats ? (
-              <p className="text-gray-500 py-8 text-center">分类加载中…</p>
+              <Skeleton variant="text" rows={3} className="w-48 mx-auto" />
             ) : hubLoading && hubRows.length === 0 ? (
                 <div className="py-16 text-center text-gray-500">加载模板列表…</div>
             ) : hubRows.length === 0 ? (
@@ -2436,7 +2349,7 @@ export default function ContractTemplateLibraryPage() {
                         </button>
                         {hasPdf ?
                               <a
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 text-xs"
+                                className="btn-download-pdf"
                                 href={publicUrlForStoragePath(r.merged_pdf_storage_path!)}
                                 target="_blank"
                                 rel="noreferrer">
@@ -2719,7 +2632,7 @@ export default function ContractTemplateLibraryPage() {
                                 <button
                                   type="button"
                                   disabled={trashActionBusy}
-                                  className="px-2 py-1 rounded-md border border-red-200 bg-red-50 text-red-800 hover:bg-red-100 text-xs disabled:opacity-50"
+                                  className="btn-action-danger disabled:opacity-50"
                                   onClick={() => setPermaConfirm({ ids: [row.id], typed: '' })}>
                                   
                               彻底删除
@@ -2735,7 +2648,6 @@ export default function ContractTemplateLibraryPage() {
             </table>
           </div>
             )}
-        }
       </div>);
 
   };
@@ -3193,9 +3105,172 @@ export default function ContractTemplateLibraryPage() {
         {view.name === 'hub' && renderHub()}
         {view.name === 'tpl_detail' && renderTplDetail(view)}
         {view.name === 'generate' && renderGenerate(view)}
-        {view.name === 'my' && renderMy()}
-        {view.name === 'my_trash' && renderMyTrash()}
-        {view.name === 'gen_detail' && renderGenDetail(view)}
+        {view.name === 'my' && (
+          <MyGeneratedTable
+            rows={myList}
+            filteredRows={myGenRows}
+            loading={myListLoading}
+            search={myGenSearch}
+            statusFilter={myGenStatus}
+            sort={myGenSort}
+            statusFilterOptions={myGenStatusFilterOptions}
+            sortOptions={myGenSortOptions}
+            onSearchChange={(v) => setMyGenSearch(v)}
+            onStatusFilterChange={(v) => setMyGenStatus(v)}
+            onSortChange={(v) => setMyGenSort(v)}
+            onRefresh={() => void loadMy()}
+            onNavigateBack={() => {
+              navigate('/contract/templates');
+              setView({ name: 'hub' });
+            }}
+            onNavigateTrash={() => {
+              navigate('/contract/templates/my-generated/trash');
+              setView({ name: 'my_trash' });
+            }}
+            onNavigateNewFromTemplate={() => {
+              navigate('/contract/templates');
+              setView({ name: 'hub' });
+            }}
+            onExportCsv={exportCsv}
+            onPreview={(r) => {
+              setPreviewContractId(r.id);
+              setContractPreviewOpen(true);
+            }}
+            onViewDetail={(r) => goGenDetail(r, false)}
+            onDelete={(r) => {
+              setSoftDeleteModalRow(r);
+              setSoftDeleteReasonDraft('');
+            }}
+            buildPublicUrl={publicUrlForStoragePath}
+          />
+        )}
+        {view.name === 'my_trash' && (
+          <TrashTable
+            rows={trashRows}
+            selected={trashSelected}
+            loading={trashLoading}
+            actionBusy={trashActionBusy}
+            total={trashTotal}
+            page={trashPage}
+            pageSize={trashPageSize}
+            sort={trashSort}
+            search={trashNoSearch}
+            sortOptions={trashSortOptions}
+            isSuperAdmin={isSuperAdmin}
+            onSelectChange={(s) => setTrashSelected(s)}
+            onPageChange={(p) => setTrashPage(p)}
+            onSortChange={(v) => setTrashSort(v as TrashCompositeSort)}
+            onSearchChange={(v) => setTrashNoSearch(v)}
+            onRefresh={() => void loadTrash()}
+            onBatchRestore={() => void batchRestoreTrash()}
+            onRestoreOne={(id) => void restoreOneTrash(id)}
+            onPermanentDelete={(ids) => setPermaConfirm({ ids, typed: '' })}
+            onViewDetail={(row) => goGenDetail(row, true)}
+            onNavigateBack={() => {
+              navigate('/contract/templates/my-generated');
+              setView({ name: 'my' });
+            }}
+          />
+        )}
+        {view.name === 'gen_detail' && (() => {
+          const r = (view as Extract<View, {name: 'gen_detail';}>).row;
+          return (
+            <GenDetailPanel
+              row={r}
+              genDetailFromTrash={genDetailFromTrash}
+              trashActionBusy={trashActionBusy}
+              revisions={revisions}
+              wordFillFailure={wordFillFailure}
+              retryFillBusy={retryFillBusy}
+              userId={userId}
+              isSuperAdmin={isSuperAdmin}
+              genDocxBusy={genDocxBusy}
+              genPdfBusy={genPdfBusy}
+              statusBadgeClass={statusBadgeClass}
+              formatStatusLabel={formatGeneratedContractStatusLabel}
+              buildPublicUrl={publicUrlForStoragePath}
+              onNavigateBack={async () => {
+                if (genDetailFromTrash) {
+                  navigate('/contract/templates/my-generated/trash');
+                  setView({ name: 'my_trash' });
+                } else {
+                  navigate('/contract/templates/my-generated');
+                  setView({ name: 'my' });
+                }
+              }}
+              onNavigateToHub={() => {
+                navigate('/contract/templates');
+                setView({ name: 'hub' });
+              }}
+              onRestore={async () => {
+                await restoreOneTrash(r.id);
+                const fresh = await getGeneratedContract(r.id);
+                if (fresh && !fresh.deleted_at) {
+                  setGenDetailFromTrash(false);
+                  goGenDetail(fresh, false);
+                } else {
+                  navigate('/contract/templates/my-generated');
+                  setView({ name: 'my' });
+                }
+              }}
+              onPermanentDelete={() => setPermaConfirm({ ids: [r.id], typed: '' })}
+              onRetryFill={async () => {
+                if (!userId) {
+                  setErr('请先登录后再重试 Word 填充');
+                  return;
+                }
+                setRetryFillBusy(true);
+                setErr(null);
+                try {
+                  const { runDocxFillAfterGeneratedContract } = await import('../../services/contractGenerationService');
+                  await runDocxFillAfterGeneratedContract({
+                    generatedId: r.id,
+                    variables: r.variables_values || {},
+                    userId,
+                  });
+                  const fresh = await getGeneratedContract(r.id);
+                  if (fresh) {
+                    setWordFillFailure(null);
+                    setView({ name: 'gen_detail', row: fresh });
+                    if (fresh.generated_docx_storage_path) {
+                      setPreviewContractId(fresh.id);
+                      setContractPreviewOpen(true);
+                    }
+                  }
+                } catch (e: unknown) {
+                  const msg = (e as Error)?.message || '重试失败';
+                  setWordFillFailure({ id: r.id, message: msg });
+                  setErr(msg + '\n\n建议：缩小筛选范围或稍后再试；若持续超时请联系管理员优化查询。');
+                } finally {
+                  setRetryFillBusy(false);
+                }
+              }}
+              onPreview={() => {
+                setPreviewContractId(r.id);
+                setContractPreviewOpen(true);
+              }}
+              onSaveFinal={() => void handleSaveGeneratedContractFinal(r)}
+              onGeneratePdf={() => void handleConvertGeneratedContractPdf(r)}
+              onStartApproval={() => void startApproval(r)}
+              onApplySeal={() => void applySealDemo(r)}
+              onSaveRevision={async (html) => {
+                setErr(null);
+                try {
+                  const { saveGeneratedRichTextRevision } = await import('../../services/contractGenerationService');
+                  await saveGeneratedRichTextRevision({ generatedId: r.id, html, userId });
+                  await loadRevisions(r.id);
+                  const fresh = await getGeneratedContract(r.id);
+                  if (fresh) setView({ name: 'gen_detail', row: fresh });
+                } catch (e: unknown) {
+                  setErr((e as Error)?.message || '保存修订失败');
+                }
+              }}
+              onUploadDocx={async (f) => {
+                await handleUploadGeneratedContractDocx(r, f);
+              }}
+            />
+          );
+        })()}
         {view.name === 'generation_management' && renderGenerationManagement()}
       </div>
       {toast ?

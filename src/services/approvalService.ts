@@ -86,7 +86,7 @@ async function advanceAfterStep(
   const sorted = [...steps].sort((a, b) => a.step_order - b.step_order);
   for (const step of sorted) {
     if (step.step_order <= completedStepOrder) continue;
-    const ids = await resolveApproverUserIds(step);
+    const ids = await resolveApproverUserIds(step, approval.id);
     if (shouldSkipApprovalStep(step, initiatorId, ids)) {
       resolvedAuto.push({ step_order: step.step_order, step_name: step.step_name });
       continue;
@@ -234,6 +234,92 @@ export async function createApproval(
   return getApprovalById(data.id);
 }
 
+export type ApprovalSubmitApprover = {
+  stepOrder: number;
+  approverId: string;
+  approverName?: string;
+  isDefault?: boolean;
+};
+
+/** 发起审批（支持自定义各步骤审批人） */
+export async function createApprovalWithApprovers(
+  sourceType: string,
+  sourceId: string,
+  sourceName: string,
+  createdBy: string,
+  approvers: ApprovalSubmitApprover[],
+  options?: { remark?: string; createdByName?: string; projectId?: string | null },
+) {
+  const name =
+    options?.createdByName ||
+    (await supabase.from('users').select('real_name, username').eq('id', createdBy).single()).data
+      ?.real_name ||
+    '发起人';
+
+  const existing = await getLatestApprovalBySource(sourceType, sourceId);
+  if (existing?.status === 'pending') {
+    return getApprovalById(existing.id);
+  }
+  if (existing?.status === 'rejected' || existing?.status === 'withdrawn') {
+    await supabase.from('approvals').update({ source_name: sourceName }).eq('id', existing.id);
+    return resubmitApproval(existing.id, createdBy, name);
+  }
+
+  const steps = await loadSteps(sourceType, sourceId);
+  if (steps.length === 0) return null;
+
+  const { data, error } = await supabase
+    .from('approvals')
+    .insert({
+      source_type: sourceType,
+      source_id: sourceId,
+      source_name: sourceName,
+      current_step: 1,
+      status: 'pending',
+      created_by: createdBy,
+      submit_remark: options?.remark?.trim() || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  const approverRows = approvers
+    .filter((a) => a.stepOrder > 1)
+    .map((a) => {
+      const step = steps.find((s) => s.step_order === a.stepOrder);
+      return {
+        approval_id: data.id,
+        step_order: a.stepOrder,
+        approver_role: step?.approver_role || '',
+        approver_id: a.approverId,
+        approver_name: a.approverName || '',
+        is_default: a.isDefault ?? true,
+      };
+    })
+    .filter((r) => r.approver_role);
+
+  if (approverRows.length > 0) {
+    const { error: insErr } = await supabase.from('approval_instance_approvers').insert(approverRows);
+    if (insErr) throw insErr;
+  }
+
+  if (options?.remark?.trim()) {
+    await supabase.from('approval_records').insert({
+      approval_id: data.id,
+      step_order: 1,
+      step_name: '发起说明',
+      approver_id: createdBy,
+      approver_name: name,
+      action: 'comment',
+      comment: options.remark.trim(),
+    });
+  }
+
+  await advanceAfterStep(data, steps, 0, createdBy, name);
+  return getApprovalById(data.id);
+}
+
 export async function getApprovalBySource(sourceType: string, sourceId: string) {
   return getLatestApprovalBySource(sourceType, sourceId);
 }
@@ -303,16 +389,14 @@ export async function getPendingApprovals(userId?: string) {
   if (error) throw error;
   if (!userId) return data || [];
 
-  const approverRoles = await getUserApproverRoles(userId);
-  if (approverRoles.length === 0) return [];
-
   const result: Approval[] = [];
   for (const approval of data || []) {
     const steps = await loadSteps(approval.source_type, approval.source_id);
     const current = steps.find((s) => s.step_order === approval.current_step);
     if (!current) continue;
-    if (!approverRoles.includes(current.approver_role)) continue;
-    if (!(await userCanApproveStep(userId, current, approval.source_type))) continue;
+    const ids = await resolveApproverUserIds(current, approval.id);
+    if (!ids.includes(userId)) continue;
+    if (!(await userCanApproveStep(userId, current, approval.source_type, approval.id))) continue;
     if (
       isCountersignStep(current) &&
       (await userAlreadyVotedCurrentStep(approval.id, approval.current_step, userId))
@@ -337,7 +421,7 @@ export async function approve(
   const currentStep = steps.find((s) => s.step_order === approval.current_step);
   if (!currentStep) throw new Error('当前审批步骤无效');
 
-  if (!(await userCanApproveStep(approverId, currentStep, approval.source_type))) {
+  if (!(await userCanApproveStep(approverId, currentStep, approval.source_type, approvalId))) {
     throw new Error('您无权处理当前审批步骤');
   }
 
@@ -385,7 +469,7 @@ export async function reject(
   const steps = await loadSteps(approval.source_type, approval.source_id);
   const currentStep = steps.find((s) => s.step_order === approval.current_step);
 
-  if (currentStep && !(await userCanApproveStep(approverId, currentStep, approval.source_type))) {
+  if (currentStep && !(await userCanApproveStep(approverId, currentStep, approval.source_type, approvalId))) {
     throw new Error('您无权处理当前审批步骤');
   }
 
@@ -426,6 +510,7 @@ const SOURCE_STATUS_COLUMN_UPDATES: Partial<Record<string, SourceStatusColumnUpd
   income_output: { table: 'income_output_confirmations', column: 'status', approved: '已确认', rejected: '待确认' },
   income_settlement: { table: 'income_settlements', column: 'status', approved: '已结算', rejected: '未结算' },
   expense_settlement: { table: 'expense_settlements', column: 'status', approved: '已结算', rejected: '未结算' },
+  machine_shift: { table: 'machine_shift_records', column: 'status', approved: 'confirmed', rejected: 'draft' },
 };
 
 async function updateSourceStatus(sourceType: string, sourceId: string, status: string) {
@@ -467,7 +552,7 @@ async function notifyCreator(
 }
 
 async function notifyApprover(approval: Approval, step: ApprovalFlowStep) {
-  const userIds = await resolveApproverUserIds(step);
+  const userIds = await resolveApproverUserIds(step, approval.id);
   if (userIds.length === 0) return;
 
   const { data: users } = await supabase
@@ -480,10 +565,11 @@ async function notifyApprover(approval: Approval, step: ApprovalFlowStep) {
 
   for (const user of users || []) {
     const dedupeKey = `approval|${user.id}|${approval.id}|${step.step_order}|${today}`;
+    const body = `【${label}】${approval.source_name} 需要您处理：${step.step_name}`;
     const { error } = await supabase.from('notifications').insert({
       user_id: user.id,
       title: '您有新的审批待办',
-      body: `【${label}】${approval.source_name} 需要您处理：${step.step_name}`,
+      body,
       category: 'approval',
       dedupe_key: dedupeKey,
       payload: { approval_id: approval.id, step_order: step.step_order },

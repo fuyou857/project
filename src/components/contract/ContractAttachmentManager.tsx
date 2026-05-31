@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaFilePdf, FaFileWord, FaLink, FaPlus, FaTimes, FaUpload } from 'react-icons/fa';
 import { listGeneratedContracts } from '../../services/contractGenerationService';
@@ -18,6 +18,7 @@ export default function ContractAttachmentManager({
   const [showSelector, setShowSelector] = useState(false);
   const [generatedContracts, setGeneratedContracts] = useState<any[]>([]);
   const [loadingGenerated, setLoadingGenerated] = useState(false);
+  const localFileInputRef = useRef<HTMLInputElement>(null);
 
   const notify = useCallback(
     (message: string) => {
@@ -80,15 +81,19 @@ export default function ContractAttachmentManager({
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-medium text-gray-800">附件管理</h4>
           <div className="flex gap-2">
+            {/* 隐藏的 file input — 使用 React ref 替代 document.createElement */}
+            <input
+              type="file"
+              ref={localFileInputRef}
+              multiple
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+              onChange={handleLocalFileSelect}
+              className="hidden"
+              aria-label="选择本地文件上传"
+            />
             <button
               type="button"
-              onClick={() => {
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.multiple = true;
-                fileInput.onchange = handleLocalFileSelect;
-                fileInput.click();
-              }}
+              onClick={() => localFileInputRef.current?.click()}
               className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center gap-1"
             >
               <FaUpload className="w-3.5 h-3.5" />

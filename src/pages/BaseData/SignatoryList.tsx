@@ -5,6 +5,7 @@ import { supabase } from '../../supabase/client';
 import { alertMissingRequiredFields } from '../../utils/contractSubPage';
 import { isSuperAdminUser } from '../../utils/sessionUser';
 import { PAGE_SIZE } from '../../constants';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface Signatory {
   id: string;
@@ -65,12 +66,13 @@ export default function SignatoryList() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchData();
-  }, [page, search]);
+  }, [page, debouncedSearch]);
 
   async function fetchData() {
     const offset = (page - 1) * PAGE_SIZE;
@@ -80,8 +82,8 @@ export default function SignatoryList() {
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    if (search) {
-      query = query.ilike('unit_name', `%${search}%`);
+    if (debouncedSearch) {
+      query = query.ilike('unit_name', `%${debouncedSearch}%`);
     }
 
     const res = await query;

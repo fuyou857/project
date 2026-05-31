@@ -60,6 +60,14 @@ const ACTIONS = {
 export const logModule = MODULES;
 export const logAction = ACTIONS;
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function resolveLogUserId(user: Record<string, unknown>): string | null {
+  const id = typeof user.id === 'string' ? user.id.trim() : '';
+  return UUID_RE.test(id) ? id : null;
+}
+
 export async function addLog(
   module: string,
   action: string,
@@ -81,8 +89,8 @@ export async function addLog(
     const ip = await getClientIP();
     const sanitizedParams = sanitizeParams(requestParams);
 
+    const userId = resolveLogUserId(user);
     const logData: Record<string, unknown> = {
-      user_id: typeof user.id === 'string' ? user.id : '',
       user_name:
         (typeof user.real_name === 'string' && user.real_name) ||
         (typeof user.username === 'string' && user.username) ||
@@ -95,6 +103,9 @@ export async function addLog(
       request_params: JSON.stringify(sanitizedParams),
       status,
     };
+    if (userId) {
+      logData.user_id = userId;
+    }
 
     const { error } = await supabase.from('operation_logs').insert([logData]);
 
@@ -184,23 +195,36 @@ function sanitizeParams(params: Record<string, unknown>): Record<string, unknown
 }
 
 async function getClientIP(): Promise<string> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    
-    const response = await fetch('https://api.ipify.org?format=json', {
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeout);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const ipServices = [
+    { url: 'https://myip.ipip.net', parse: (text: string) => text.split(' ')[1] },
+    { url: 'https://ip.awk.so', parse: (text: string) => text.trim() },
+    { url: 'https://api.ipify.org?format=json', parse: (json: { ip: string }) => json.ip },
+  ];
+
+  for (const service of ipServices) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+
+      const response = await fetch(service.url, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const text = await response.text();
+      const ip = (service.parse as (x: string) => string)(text);
+      if (ip && ip !== 'unknown') {
+        return ip;
+      }
+    } catch {
+      continue;
     }
-    
-    const data = await response.json();
-    return data.ip || 'unknown';
-  } catch {
-    return 'unknown';
   }
+
+  return 'unknown';
 }

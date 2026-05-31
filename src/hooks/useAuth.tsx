@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '../supabase/client';
+import { signInWithAccount } from '../services/authLoginService';
 import { getUserById, isStrictSuperAdmin, isSuperAdmin, type User } from '../services/userService';
 
 export interface AuthState {
@@ -24,8 +25,8 @@ interface AuthContextType {
   canDeleteUser: (targetUser: User) => boolean;
   canResetPassword: (targetUser: User) => boolean;
   canModifyRoles: () => boolean;
-  refreshUser: () => void;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  refreshUser: () => Promise<void>;
+  signIn: (account: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -83,7 +84,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        const dbUser = await getUserById(user.id);
+        let dbUser = await getUserById(user.id);
+
+        // 企微 magic link 等场景：auth.users.id 与 public.users.id 不一致时按邮箱回退
+        if (!dbUser && user.email) {
+          const { data: byEmail } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .maybeSingle();
+          if (byEmail) {
+            dbUser = {
+              ...byEmail,
+              role_ids: Array.isArray(byEmail.role_ids) ? byEmail.role_ids : [],
+              project_ids: Array.isArray(byEmail.project_ids) ? byEmail.project_ids : [],
+            };
+          }
+        }
+
         if (dbUser) {
           const adminStatus = await isSuperAdmin(dbUser);
           const strictAdminStatus = await isStrictSuperAdmin(dbUser);
@@ -183,12 +201,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authState.isSuperAdmin;
   }, [authState.user, authState.isSuperAdmin]);
 
-  const signIn = useCallback(async (email: string, password: string): Promise<{ error: Error | null }> => {
+  const signIn = useCallback(async (account: string, password: string): Promise<{ error: Error | null }> => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        return { error: new Error(error.message) };
-      }
+      const { error } = await signInWithAccount(account, password);
+      if (error) return { error };
       await fetchCurrentUser();
       return { error: null };
     } catch (err: unknown) {

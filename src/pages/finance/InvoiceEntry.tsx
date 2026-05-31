@@ -14,6 +14,7 @@ import { useCompanyScope } from '../../hooks/useCompanyScope';
 import { useInvoiceOcrForm } from '../../hooks/useInvoiceOcrForm';
 import { projectSelectOptions } from '../../components/ui/options';
 import CostInvoiceEntryWorkspace from './costInvoice/CostInvoiceEntryWorkspace';
+import CostInvoiceEntry_v2 from './costInvoice_v2/CostInvoiceEntry_v2';
 import {
   type CostInvoiceForm,
   type InvoiceAttachmentItem,
@@ -41,6 +42,7 @@ import { resolvePersistOcrStatus } from './costInvoice/applyOcrToForm';
 import { addLog, logAction, logModule } from '../../services/logService';
 import { deferModalOpen } from '../../utils/deferModalOpen';
 import { resetBodyInteractionLock } from '../../utils/bodyInteractionLock';
+import { isFeatureEnabled, FEATURE_FLAGS } from '../../utils/featureFlags';
 
 export type { InvoiceAttachmentItem };
 
@@ -125,6 +127,12 @@ function normalizeAttachments(raw: unknown): InvoiceAttachmentItem[] {
 }
 
 export default function InvoiceEntry() {
+  // 特性标志检查：如果V2已启用，直接返回V2组件
+  const v2Enabled = isFeatureEnabled(FEATURE_FLAGS.COST_INVOICE_V2);
+  if (v2Enabled) {
+    return <CostInvoiceEntry_v2 />;
+  }
+
   const location = useLocation();
   const { currentCompany, companies, companyIds } = useCompanyScope();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -144,6 +152,18 @@ export default function InvoiceEntry() {
 
   useBodyScrollLock(showModal || showAddPartyB);
   const invoiceModalInteractionReady = useModalInteractionGuard(showModal);
+
+  // 确保组件初始化时不会有残留的弹窗状态
+  useEffect(() => {
+    console.log('[InvoiceEntry] 初始化 - 重置弹窗状态');
+    setShowAddPartyB(false);
+    setAddPartyBFromOcr(false);
+  }, []);
+
+  // 调试：追踪 showAddPartyB 状态变化
+  useEffect(() => {
+    console.log('[InvoiceEntry] showAddPartyB 状态变化:', showAddPartyB);
+  }, [showAddPartyB]);
 
   useEffect(() => {
     fetchData();
@@ -338,8 +358,7 @@ export default function InvoiceEntry() {
           bank_name: draft.bank_name || '',
           bank_account: draft.bank_account || '',
         });
-        setAddPartyBFromOcr(true);
-        setShowAddPartyB(true);
+        warnings.push('系统中未找到匹配的乙方单位，如需新增请点击「新增乙方单位」按钮');
       }
 
       setSupplierSyncWarnings(warnings);
@@ -554,18 +573,26 @@ export default function InvoiceEntry() {
   }
 
   function openCreateModal() {
+    console.log('[InvoiceEntry] openCreateModal - 开始');
     setEditingInvoice(null);
     setForm(initialCostInvoiceForm());
     ocr.resetOcrMeta();
     setSupplierSyncWarnings([]);
     setAddPartyBFromOcr(false);
+    setShowAddPartyB(false);
+    console.log('[InvoiceEntry] openCreateModal - showAddPartyB 已设置为 false');
     const savedProject = localStorage.getItem('ciond_cost_invoice_last_project');
     if (savedProject) setForm((f) => ({ ...f, project_id: savedProject }));
-    deferModalOpen(() => setShowModal(true));
+    deferModalOpen(() => {
+      console.log('[InvoiceEntry] openCreateModal - 打开主窗口');
+      setShowModal(true);
+    });
   }
 
   function openEditModal(inv: Invoice) {
     setEditingInvoice(inv);
+    setShowAddPartyB(false);
+    setAddPartyBFromOcr(false);
     const urls = normalizeAttachments(inv.attachment_urls);
     const ext = unpackExtendedRemark(inv.remark);
     setForm({
@@ -666,11 +693,8 @@ export default function InvoiceEntry() {
             基础数据库中没有此乙方单位，是否一并新增？确认前可修改下方信息。
           </p>
         )}
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4">
           <h3 className="text-lg font-bold text-gray-800">新增乙方单位</h3>
-          <button type="button" onClick={() => setShowAddPartyB(false)} className="text-gray-500 hover:text-gray-800">
-            <FaTimes />
-          </button>
         </div>
         <div className="space-y-3">
           <div>

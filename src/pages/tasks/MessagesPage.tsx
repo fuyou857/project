@@ -10,6 +10,8 @@ import {
   saveReminderDays,
   type NotificationRow,
 } from '../../services/notificationService';
+import { useSingleToast } from '../../hooks/useSingleToast';
+import { errorMessageFromUnknown } from '../../utils/httpErrorMessage';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -18,6 +20,7 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [daysStr, setDaysStr] = useState('1,3,7');
   const [prefsSaved, setPrefsSaved] = useState(false);
+  const { showToast } = useSingleToast();
 
   const load = useCallback(async () => {
     if (!uid) return;
@@ -28,6 +31,7 @@ export default function MessagesPage() {
       setDaysStr(days.join(','));
     } catch (e) {
       console.error(e);
+      showToast('error', '加载通知失败');
     } finally {
       setLoading(false);
     }
@@ -43,7 +47,7 @@ export default function MessagesPage() {
       await markNotificationRead(n.id, uid);
       await load();
     } catch (e) {
-      alert((e as Error).message);
+      showToast('error', errorMessageFromUnknown(e, '标记已读失败'));
     }
   }
 
@@ -53,7 +57,7 @@ export default function MessagesPage() {
       await markAllNotificationsRead(uid);
       await load();
     } catch (e) {
-      alert((e as Error).message);
+      showToast('error', errorMessageFromUnknown(e, '全部已读失败'));
     }
   }
 
@@ -68,7 +72,7 @@ export default function MessagesPage() {
       setPrefsSaved(true);
       setTimeout(() => setPrefsSaved(false), 2000);
     } catch (e) {
-      alert((e as Error).message);
+      showToast('error', errorMessageFromUnknown(e, '保存偏好失败'));
     }
   }
 

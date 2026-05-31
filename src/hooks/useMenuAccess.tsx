@@ -83,7 +83,8 @@ export function filterNavByPermissions(
       }
       const isBaseData = item.path === '/base-data';
       const isTasks = item.path === '/tasks';
-      if (!isSuperAdmin && !isBaseData && !isTasks && !canShowTopMenuPath(item.path, isSuperAdmin, mergedPerms)) {
+      const isMachines = item.path === '/machines';
+      if (!isSuperAdmin && !isBaseData && !isTasks && !isMachines && !canShowTopMenuPath(item.path, isSuperAdmin, mergedPerms)) {
         continue;
       }
 
@@ -98,6 +99,16 @@ export function filterNavByPermissions(
       }
 
       if (isTasks) {
+        const visibleChildren = item.children?.filter(ch => ch.showInSidebar !== false) ?? [];
+        if (visibleChildren.length > 0) {
+          out.push({ ...item, children: visibleChildren });
+        } else if (!item.children?.length) {
+          out.push(item);
+        }
+        continue;
+      }
+
+      if (isMachines) {
         const visibleChildren = item.children?.filter(ch => ch.showInSidebar !== false) ?? [];
         if (visibleChildren.length > 0) {
           out.push({ ...item, children: visibleChildren });

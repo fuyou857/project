@@ -106,8 +106,8 @@ export function useInvoiceOcrForm({ setForm, onOcrStatusChange, onOcrComplete }:
         });
         pushLog('success', '识别完成，字段已回填');
         if (ocrFormSnapshot) {
-          pushLog('info', `销售方：${ocrFormSnapshot.seller_name || '—'}，将校验基础数据乙方`);
-          onOcrComplete?.(ocrFormSnapshot, st);
+          pushLog('info', `销售方：${(ocrFormSnapshot as CostInvoiceForm).seller_name || '—'}，将校验基础数据乙方`);
+          onOcrComplete?.(ocrFormSnapshot as CostInvoiceForm, st);
         }
         setProgressLabel('识别完成');
       } catch (e) {

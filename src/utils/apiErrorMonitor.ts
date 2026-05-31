@@ -82,6 +82,7 @@ class ApiErrorMonitor {
   }
 
   private setupNetworkErrorCapture(): void {
+    // 为 XMLHttpRequest 添加 monitor 属性类型
     // 捕获全局 fetch 错误
     const originalFetch = window.fetch;
     
@@ -117,41 +118,43 @@ class ApiErrorMonitor {
     // 捕获 XMLHttpRequest 错误
     const originalXHROpen = XMLHttpRequest.prototype.open;
     const originalXHRSend = XMLHttpRequest.prototype.send;
+    const self = this;
     
     XMLHttpRequest.prototype.open = function(
+      this: XMLHttpRequest,
       method: string,
       url: string,
       ...rest: unknown[]
     ) {
-      (this as XMLHttpRequest & { _method: string; _url: string })._method = method;
-      (this as XMLHttpRequest & { _method: string; _url: string })._url = url;
-      return originalXHROpen.apply(this, [method, url, ...rest] as Parameters<typeof originalXHROpen>);
+      (this as unknown as Record<string, unknown>)._method = method;
+      (this as unknown as Record<string, unknown>)._url = url;
+      return (originalXHROpen as Function).apply(this, [method, url, ...rest]);
     };
 
-    XMLHttpRequest.prototype.send = function(...args) {
+    XMLHttpRequest.prototype.send = function(this: XMLHttpRequest, ...args: Parameters<XMLHttpRequest['send']>) {
       this.addEventListener('error', () => {
-        const { _method, _url } = this as XMLHttpRequest & { _method: string; _url: string };
-        this.monitor?.captureError({
-          endpoint: _url,
-          method: _method || 'GET',
+        const xhr = this as unknown as Record<string, unknown>;
+        self.captureError({
+          endpoint: String(xhr._url || ''),
+          method: String(xhr._method || 'GET'),
           statusCode: 0,
           errorMessage: 'XHR Network Error',
         });
       });
 
-      this.addEventListener('load', () => {
+      this.addEventListener('load', function(this: XMLHttpRequest) {
         if (this.status >= 400) {
-          const { _method, _url } = this as XMLHttpRequest & { _method: string; _url: string };
-          this.monitor?.captureError({
-            endpoint: _url,
-            method: _method || 'GET',
+          const xhr = this as unknown as Record<string, unknown>;
+          self.captureError({
+            endpoint: String(xhr._url || ''),
+            method: String(xhr._method || 'GET'),
             statusCode: this.status,
             errorMessage: `HTTP ${this.status}: ${this.statusText}`,
           });
         }
       });
 
-      return originalXHRSend.apply(this, args as Parameters<typeof originalXHROpen>);
+      return originalXHRSend.apply(this, args);
     };
   }
 

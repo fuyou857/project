@@ -1,70 +1,51 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaWeixin } from 'react-icons/fa';
-import { getAuthUrl, isWechatWorkAuthCallback, loginWithWechatWork, validateWechatWorkConfig } from '../services/wechatWorkService';
-import { addLog, logModule, logAction } from '../services/logService';
+import {
+  fetchWechatWorkPublicConfig,
+  getAuthUrl,
+  validateWechatWorkConfig,
+} from '../services/wechatWorkService';
 
 interface WechatWorkLoginProps {
-  onSuccess?: () => void;
   onError?: (message: string) => void;
 }
 
-export default function WechatWorkLogin({ onSuccess, onError }: WechatWorkLoginProps) {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+function isLoginRoute(location: ReturnType<typeof useLocation>): boolean {
+  const hashRoute = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+  return (
+    location.pathname === '/login' ||
+    hashRoute === '/login' ||
+    hashRoute.startsWith('/login?') ||
+    window.location.pathname === '/login'
+  );
+}
+
+/** 登录页企微扫码入口（OAuth 回调由 App 层 WechatWorkLoginOAuthGate 处理） */
+export default function WechatWorkLogin({ onError }: WechatWorkLoginProps) {
+  const location = useLocation();
+  const [loading] = useState(false);
   const [error, setError] = useState('');
-  const [configValid, setConfigValid] = useState(true);
+  const [configValid, setConfigValid] = useState(false);
+  const onLoginRoute = isLoginRoute(location);
 
   useEffect(() => {
-    setConfigValid(validateWechatWorkConfig());
-  }, []);
+    if (!onLoginRoute) return;
+    (async () => {
+      const remote = await fetchWechatWorkPublicConfig();
+      setConfigValid(remote?.configured ?? validateWechatWorkConfig());
+    })();
+  }, [onLoginRoute]);
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      if (isWechatWorkAuthCallback()) {
-        setLoading(true);
-        setError('');
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        
-        if (code) {
-          try {
-            const result = await loginWithWechatWork(code);
-            
-            if (result.success) {
-              addLog(logModule.SYSTEM, logAction.LOGIN, `企业微信登录成功: ${result.user?.name}`, { 
-                userId: result.user?.userid, 
-                userName: result.user?.name 
-              });
-              onSuccess?.();
-              navigate('/dashboard');
-            } else {
-              setError(result.message);
-              addLog(logModule.SYSTEM, logAction.LOGIN, `企业微信登录失败: ${result.message}`, {}, 'failed');
-              onError?.(result.message);
-            }
-          } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : '登录失败';
-            setError(msg);
-            addLog(logModule.SYSTEM, logAction.LOGIN, `企业微信登录异常: ${msg}`, {}, 'failed');
-            onError?.(msg);
-          } finally {
-            setLoading(false);
-          }
-        }
-      }
-    };
-
-    handleAuthCallback();
-  }, [navigate, onSuccess, onError]);
+  if (!onLoginRoute) {
+    return null;
+  }
 
   const handleLogin = () => {
     if (!configValid || loading) return;
-    
     try {
-      const authUrl = getAuthUrl();
+      const authUrl = getAuthUrl('login');
       window.location.href = authUrl;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '跳转失败';
@@ -76,26 +57,30 @@ export default function WechatWorkLogin({ onSuccess, onError }: WechatWorkLoginP
   if (!configValid) {
     return (
       <div className="text-center py-4">
-        <p className="text-slate-500 text-sm">企业微信登录功能暂未配置</p>
+        <p className="text-slate-500 text-sm">企业微信登录未配置（请在 API 密钥中心配置 wechat_work）</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="mt-6"
+    >
       <div className="flex items-center justify-center gap-2 mb-4">
         <div className="flex-1 h-px bg-slate-600" />
         <span className="text-slate-500 text-sm">或</span>
         <div className="flex-1 h-px bg-slate-600" />
       </div>
-      
+
       {error && (
-        <div className="text-red-400 text-sm text-center mb-4 bg-red-500/10 py-2 rounded-lg">
-          {error}
-        </div>
+        <div className="text-red-400 text-sm text-center mb-4 bg-red-500/10 py-2 rounded-lg">{error}</div>
       )}
-      
+
       <motion.button
+        type="button"
         onClick={handleLogin}
         disabled={loading}
         whileHover={{ scale: 1.02 }}
@@ -109,6 +94,6 @@ export default function WechatWorkLogin({ onSuccess, onError }: WechatWorkLoginP
         )}
         {loading ? '登录中...' : '使用企业微信登录'}
       </motion.button>
-    </div>
+    </motion.div>
   );
 }

@@ -7,6 +7,7 @@ import { isSuperAdminUser } from '../../utils/sessionUser';
 import { projectIdsForInvoiceScope } from '../../utils/companyProjectScope';
 import { SearchableSelect } from '../../components/ui';
 import { projectSelectOptions } from '../../components/ui/options';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface TaxDebtInvoice {
   id: string;
@@ -41,6 +42,7 @@ export default function TaxDebtList() {
   const [companyFilter, setCompanyFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
 
   const [projects, setProjects] = useState<{id: string;name: string;}[]>([]);
   const [showPayModal, setShowPayModal] = useState(false);
@@ -61,7 +63,7 @@ export default function TaxDebtList() {
 
   useEffect(() => {
     void fetchInvoices();
-  }, [page, companyFilter, projectFilter, keyword, showPaid, currentCompany, companies]);
+  }, [page, companyFilter, projectFilter, debouncedKeyword, showPaid, currentCompany, companies]);
 
   async function fetchProjects() {
     try {
@@ -104,8 +106,8 @@ export default function TaxDebtList() {
         query = query.in('project_id', scopedProjectIds);
       }
       if (projectFilter) query = query.eq('project_id', projectFilter);
-      if (keyword) {
-        const safe = keyword.replace(/[%(),]/g, '').trim();
+      if (debouncedKeyword) {
+        const safe = debouncedKeyword.replace(/[%(),]/g, '').trim();
         if (safe) query = query.or(`buyer_name.ilike.%${safe}%,remark.ilike.%${safe}%`);
       }
 

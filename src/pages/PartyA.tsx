@@ -4,6 +4,7 @@ import { FaPlus, FaEdit, FaTrash, FaTimes, FaSearch, FaCheckCircle, FaExclamatio
 import { supabase } from '../supabase/client';
 import { SegmentedControl } from '../components/ui';
 import EmptyState from '../components/ui/EmptyState';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
 interface PartyA { id: string; name: string; unit_type: string; credit_code: string; legal_representative: string; phone: string; address: string; created_at: string; remark?: string | null; }
 const PAGE_SIZE = 15;
@@ -15,6 +16,7 @@ export default function PartyA() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -27,11 +29,11 @@ export default function PartyA() {
   const fetchData = useCallback(async () => {
     const offset = (page - 1) * PAGE_SIZE;
     let query = supabase.from('party_a').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
-    if (search) query = query.ilike('name', `%${search}%`);
+    if (debouncedSearch) query = query.ilike('name', `%${debouncedSearch}%`);
     const { data: res, count } = await query;
     if (res) setData(res);
     setTotal(count || 0);
-  }, [page, search]);
+  }, [page, debouncedSearch]);
 
   useEffect(() => {
     fetchData();

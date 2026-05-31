@@ -21,7 +21,13 @@ class OperationTracker {
   private static instance: OperationTracker;
   private retryQueue: LogData[] = [];
 
+  /** 仅开发环境走 Java /api/common/logs；生产站点未部署该接口，避免控制台 404 刷屏 */
+  private isEnabled(): boolean {
+    return process.env.NODE_ENV === 'development';
+  }
+
   private constructor() {
+    if (!this.isEnabled()) return;
     this.setupListeners();
     this.setupApiInterceptor();
   }
@@ -119,6 +125,8 @@ class OperationTracker {
   }
 
   public async track(data: LogData) {
+    if (!this.isEnabled()) return;
+
     const user = getStoredUser();
     const fullLog: LogData = {
       ...data,

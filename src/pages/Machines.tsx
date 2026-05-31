@@ -8,7 +8,7 @@ export default function Machines() {
 
   const activeComponent = useMemo(() => {
     const path = location.pathname;
-    if (path.includes('/equipment/report')) {
+    if (path.includes('/machines/report')) {
       return <EquipmentReport />;
     }
     return <EquipmentList />;

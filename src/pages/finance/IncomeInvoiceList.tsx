@@ -10,6 +10,7 @@ import SingleToastBanner from '../../components/ui/SingleToastBanner';
 import { projectIdsForInvoiceScope } from '../../utils/companyProjectScope';
 import { SearchableSelect, SegmentedControl } from '../../components/ui';
 import { projectSelectOptions } from '../../components/ui/options';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface Invoice {
   id: string;
@@ -63,6 +64,7 @@ export default function IncomeInvoiceList() {
   const [projectFilter, setProjectFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
 
   const [projects, setProjects] = useState<{id: string;name: string;}[]>([]);
   const [showDetail, setShowDetail] = useState(false);
@@ -76,7 +78,7 @@ export default function IncomeInvoiceList() {
 
   useEffect(() => {
     void fetchInvoices();
-  }, [page, startDate, endDate, companyFilter, projectFilter, statusFilter, keyword, currentCompany, companies]);
+  }, [page, startDate, endDate, companyFilter, projectFilter, statusFilter, debouncedKeyword, currentCompany, companies]);
 
   async function fetchProjects() {
     try {
@@ -120,8 +122,8 @@ export default function IncomeInvoiceList() {
       if (endDate) query = query.lte('invoice_date', endDate + 'T23:59:59');
       if (projectFilter) query = query.eq('project_id', projectFilter);
       if (statusFilter) query = query.eq('status', statusFilter);
-      if (keyword) {
-        const safe = keyword.replace(/[%(),]/g, '').trim();
+      if (debouncedKeyword) {
+        const safe = debouncedKeyword.replace(/[%(),]/g, '').trim();
         if (safe) query = query.or(`buyer_name.ilike.%${safe}%,remark.ilike.%${safe}%`);
       }
 

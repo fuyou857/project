@@ -26,7 +26,20 @@ export async function getRoleCodesForUser(userId: string): Promise<string[]> {
   return ids.map((id) => map.get(id)).filter((c): c is string => Boolean(c));
 }
 
-export async function resolveApproverUserIds(step: ApprovalFlowStep): Promise<string[]> {
+export async function resolveApproverUserIds(
+  step: ApprovalFlowStep,
+  approvalId?: string,
+): Promise<string[]> {
+  if (approvalId) {
+    const { data: inst } = await supabase
+      .from('approval_instance_approvers')
+      .select('approver_id')
+      .eq('approval_id', approvalId)
+      .eq('step_order', step.step_order)
+      .maybeSingle();
+    if (inst?.approver_id) return [inst.approver_id];
+  }
+
   if (step.approver_id) {
     return [step.approver_id];
   }

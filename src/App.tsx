@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { AuthProvider } from './hooks/useAuth';
 import { AppProvider } from './stores';
 import { routes } from './config/routes';
+import WechatWorkLoginOAuthGate from './components/WechatWorkLoginOAuthGate';
 
 /** 旧书签 / 缓存 hash：#/contract-templates → 新路径（HashRouter 下 pathname 为 /contract-templates） */
 function LegacyContractTemplateHashRedirect() {
@@ -23,6 +24,7 @@ function App() {
     <AuthProvider>
       <AppProvider>
         <HashRouter>
+          <WechatWorkLoginOAuthGate />
           <LegacyContractTemplateHashRedirect />
           <Routes>
             {routes.map(route => (

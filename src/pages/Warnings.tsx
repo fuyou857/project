@@ -5,6 +5,7 @@ import { supabase } from '../supabase/client';
 import { useCompanyScope } from '../hooks/useCompanyScope';
 import { projectIdsForCompanies } from '../utils/companyProjectScope';
 import { SegmentedControl } from '../components/ui';
+import { errorMessageFromUnknown } from '../utils/httpErrorMessage';
 
 interface Warning {
   id: string;
@@ -46,6 +47,7 @@ export default function Warnings() {
       const { data, error } = await query;
       if (error) {
         console.error('[Warnings] fetchData', error);
+        showToast('error', errorMessageFromUnknown(error, '加载预警数据失败'));
         setWarnings([]);
         return;
       }
@@ -69,6 +71,7 @@ export default function Warnings() {
       const { data: projects, error } = await query;
       if (error) {
         console.error('[Warnings] generateWarnings projects', error);
+        showToast('error', '查询项目失败，无法生成预警');
         return;
       }
       const now = new Date();
@@ -95,6 +98,7 @@ export default function Warnings() {
       }
     } catch (e) {
       console.error('[Warnings] generateWarnings', e);
+      showToast('error', errorMessageFromUnknown(e, '生成预警失败'));
     }
   }
 
@@ -108,6 +112,7 @@ export default function Warnings() {
       }
     } catch (e) {
       console.error('[Warnings] handleResolve', e);
+      showToast('error', errorMessageFromUnknown(e, '操作失败'));
     }
   }
 
@@ -124,6 +129,7 @@ export default function Warnings() {
       }
     } catch (e) {
       console.error('[Warnings] handleDelete', e);
+      showToast('error', errorMessageFromUnknown(e, '删除失败'));
     }
   }
 

@@ -69,3 +69,60 @@ export function LoginSkeleton() {
     </div>
   );
 }
+
+/** 通用占位行：用于列表 / 表单字段加载 */
+export function LineSkeleton({ width = '100%', height = '1rem', className = '' }: { width?: string; height?: string; className?: string }) {
+  return (
+    <div
+      className={`bg-gray-200 rounded animate-pulse ${className}`}
+      style={{ width, height }}
+    />
+  );
+}
+
+/** 卡片骨架屏 */
+export function CardSkeleton({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 animate-pulse">
+      <LineSkeleton width="60%" height="1.25rem" />
+      {Array.from({ length: lines }).map((_, i) => (
+        <LineSkeleton key={i} width={`${70 + i * 10}%`} height="0.875rem" />
+      ))}
+    </div>
+  );
+}
+
+/** 表格骨架屏 */
+export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
+  return (
+    <div className="space-y-2 animate-pulse">
+      {/* 表头 */}
+      <div className="grid grid-cols-4 gap-4 mb-3" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        {Array.from({ length: cols }).map((_, ci) => (
+          <LineSkeleton key={`h-${ci}`} height="1rem" />
+        ))}
+      </div>
+      {/* 行 */}
+      {Array.from({ length: rows }).map((_, ri) => (
+        <div key={ri} className="grid gap-4 py-2 border-t border-gray-100" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          {Array.from({ length: cols }).map((_, ci) => (
+            <LineSkeleton key={`r${ri}-${ci}`} height="0.875rem" width={`${70 + Math.random() * 30}%`} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 预览区域骨架屏（用于 ContractPreviewModal OnlyOffice / HTML 区域） */
+export function PreviewSkeleton({ height = '400px' }: { height?: string }) {
+  return (
+    <div className="flex items-center justify-center animate-pulse" style={{ height }}>
+      <div className="text-center space-y-3">
+        <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto" />
+        <LineSkeleton width="200px" height="1rem" className="mx-auto" />
+        <LineSkeleton width="160px" height="0.75rem" className="mx-auto" />
+      </div>
+    </div>
+  );
+}

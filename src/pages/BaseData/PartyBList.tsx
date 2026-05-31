@@ -4,6 +4,7 @@ import { FaPlus, FaEdit, FaTrash, FaSearch, FaTimes, FaChevronLeft, FaChevronRig
 import { supabase } from '../../supabase/client';
 import { PAGE_SIZE, PARTY_B_TYPES, TAXPAYER_TYPES } from '../../constants';
 import { SegmentedControl } from '../../components/ui';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface PartyB {
   id: string;
@@ -53,6 +54,7 @@ export default function PartyBList() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -60,7 +62,7 @@ export default function PartyBList() {
 
   useEffect(() => {
     fetchData();
-  }, [page, search]);
+  }, [page, debouncedSearch]);
 
   async function fetchData() {
     const offset = (page - 1) * PAGE_SIZE;
@@ -70,8 +72,8 @@ export default function PartyBList() {
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    if (search) {
-      query = query.ilike('unit_name', `%${search}%`);
+    if (debouncedSearch) {
+      query = query.ilike('unit_name', `%${debouncedSearch}%`);
     }
 
     const res = await query;

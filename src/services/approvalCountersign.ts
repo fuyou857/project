@@ -44,7 +44,7 @@ export async function countersignStepComplete(
   approvalId: string,
   step: ResolvedApprovalStep,
 ): Promise<{ complete: boolean; voted: number; required: number }> {
-  const required = await resolveApproverUserIds(step);
+  const required = await resolveApproverUserIds(step, approvalId);
   if (required.length <= 1) {
     return { complete: true, voted: 1, required: required.length };
   }

@@ -1,4 +1,6 @@
 import { useState, useEffect, Fragment, useMemo, memo } from 'react';
+import SubmitApprovalProvider from './approval/SubmitApprovalProvider';
+import WechatWorkOAuthHandler from './admin/WechatWorkOAuthHandler';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown, FaChevronLeft, FaAngleRight, FaSignOutAlt, FaBars, FaTimes, FaUser, FaBell } from 'react-icons/fa';
@@ -13,6 +15,7 @@ import { useApp, Company } from '../stores';
 import { countUnreadNotifications } from '../services/notificationService';
 import { useApprovalPendingCount } from '../hooks/useApprovalPendingCount';
 import { UiPreferencesProvider, useUiPreferences } from '../contexts/UiPreferencesContext';
+import { ToastProvider, useToast } from '../contexts/ToastContext';
 
 export const useCompany = useApp;
 
@@ -476,6 +479,16 @@ function Sidebar({
   );
 }
 
+function WechatWorkOAuthHost({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
+  return (
+    <>
+      {children}
+      <WechatWorkOAuthHandler showToast={showToast} />
+    </>
+  );
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { mergedPerms, loading: permsLoading } = useMergedRolePermissions();
@@ -494,6 +507,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <UiPreferencesProvider>
+      <ToastProvider>
+      <SubmitApprovalProvider>
+      <WechatWorkOAuthHost>
       <div className="flex h-screen flex-col bg-surface-page">
         <TopNav
           menuItems={topNavMenuItems}
@@ -529,6 +545,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
         </AnimatePresence>
       </div>
+      </WechatWorkOAuthHost>
+      </SubmitApprovalProvider>
+      </ToastProvider>
     </UiPreferencesProvider>
   );
 }

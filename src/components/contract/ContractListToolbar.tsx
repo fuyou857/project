@@ -1,16 +1,48 @@
 import { type RefObject } from 'react';
-import { FaPlus, FaFileExcel, FaUpload } from 'react-icons/fa';
+import { FaPlus, FaFileExcel, FaUpload, FaSpinner } from 'react-icons/fa';
+
+interface ToolbarAction {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  variant?: 'primary' | 'success';
+  tooltip?: string;
+}
+
+function ToolbarButton({ label, icon, onClick, disabled, loading, variant = 'primary', tooltip }: ToolbarAction) {
+  const baseClass = variant === 'success'
+    ? 'bg-green-600 hover:bg-green-700 text-white'
+    : 'bg-blue-600 hover:bg-blue-700 text-white';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      title={tooltip}
+      aria-label={tooltip || label}
+      aria-pressed={loading}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${baseClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+    >
+      {loading ? <FaSpinner className="w-3.5 h-3.5 animate-spin" /> : icon}
+      {label}
+    </button>
+  );
+}
 
 interface ContractListToolbarProps {
   title: string;
-  fileInputRef: RefObject<HTMLInputElement | null>;
+  fileInputRef: RefObject<HTMLInputElement>;
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExport: () => void;
   onAdd: () => void;
   addLabel?: string;
+  exportLoading?: boolean;
+  importLoading?: boolean;
 }
 
-/** 合同列表页：标题 + 导入/导出/新增 */
 export default function ContractListToolbar({
   title,
   fileInputRef,
@@ -18,6 +50,8 @@ export default function ContractListToolbar({
   onExport,
   onAdd,
   addLabel = '新增合同',
+  exportLoading = false,
+  importLoading = false,
 }: ContractListToolbarProps) {
   return (
     <div className="flex justify-between items-center">
@@ -29,28 +63,33 @@ export default function ContractListToolbar({
           accept=".xlsx,.xls"
           onChange={onImport}
           className="hidden"
+          aria-label="选择 Excel 文件导入"
         />
-        <button
-          type="button"
+        <ToolbarButton
+          label="导入Excel"
+          icon={<FaUpload className="w-3.5 h-3.5" />}
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-gray-800 rounded-lg"
-        >
-          <FaUpload /> 导入Excel
-        </button>
-        <button
-          type="button"
+          disabled={importLoading}
+          loading={importLoading}
+          variant="success"
+          tooltip="从 Excel 文件批量导入合同数据"
+        />
+        <ToolbarButton
+          label="导出Excel"
+          icon={<FaFileExcel className="w-3.5 h-3.5" />}
           onClick={onExport}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-gray-800 rounded-lg"
-        >
-          <FaFileExcel /> 导出Excel
-        </button>
-        <button
-          type="button"
+          disabled={exportLoading}
+          loading={exportLoading}
+          variant="success"
+          tooltip="将当前列表数据导出为 Excel"
+        />
+        <ToolbarButton
+          label={addLabel}
+          icon={<FaPlus className="w-3.5 h-3.5" />}
           onClick={onAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-gray-800 rounded-lg"
-        >
-          <FaPlus /> {addLabel}
-        </button>
+          variant="primary"
+          tooltip={`新建${addLabel}`}
+        />
       </div>
     </div>
   );

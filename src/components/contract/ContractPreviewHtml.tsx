@@ -1,6 +1,35 @@
 import { useState, useEffect } from 'react';
 import { type DocxVariableToken } from '../../utils/docxVariables';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/javascript\s*:/gi, '');
+}
+
+function isValidImageUrl(url: string): boolean {
+  return (
+    url.startsWith('data:image/') ||
+    /^https?:\/\/[^\s"'>]+$/.test(url)
+  );
+}
+
+function buildImgTag(url: string): string {
+  const safeUrl = url.replace(/^javascript\s*:/i, '');
+  const escaped = escapeHtml(safeUrl);
+  return `<img src="${escaped}" alt="附件" style="max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 4px;" />`;
+}
+
 interface ContractPreviewHtmlProps {
   htmlTemplate: string;
   variables: Record<string, string>;
@@ -14,7 +43,7 @@ export default function ContractPreviewHtml({ htmlTemplate, variables, variableT
   useEffect(() => {
     if (richTextContent) {
       // 如果有编辑器内容，优先显示编辑器内容
-      setPreviewHtml(richTextContent);
+      setPreviewHtml(sanitizeHtml(richTextContent));
       return;
     }
 
@@ -28,16 +57,17 @@ export default function ContractPreviewHtml({ htmlTemplate, variables, variableT
     variableTokens.forEach(token => {
       const placeholder = `{{${token.label}}}`;
       let value = variables[token.placeholder] || '';
-      
-      // 处理附件变量，将其显示为图片
-      if (value.startsWith('data:image/') || value.startsWith('http://') || value.startsWith('https://')) {
-        value = `<img src="${value}" alt="附件" style="max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 4px;" />`;
+
+      if (isValidImageUrl(value)) {
+        value = buildImgTag(value);
+      } else {
+        value = escapeHtml(value);
       }
       
       replacedHtml = replacedHtml.replace(new RegExp(placeholder, 'g'), value);
     });
 
-    setPreviewHtml(replacedHtml);
+    setPreviewHtml(sanitizeHtml(replacedHtml));
   }, [htmlTemplate, variables, variableTokens, richTextContent]);
 
   if (!htmlTemplate && !richTextContent) {

@@ -5,3 +5,4 @@ export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { Loading, Spinner } from './Loading';
 export { DataTable } from './DataTable';
+export { default as LongTaskStatus } from './LongTaskStatus';

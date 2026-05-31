@@ -48,6 +48,9 @@ export type WechatWorkBundle = {
   agent_id: string;
   redirect_uri: string;
   corp_secret: string;
+  /** 固定 IP 中转，如 https://www.ciond.com/api/wechat-work-proxy */
+  proxy_url?: string;
+  proxy_secret?: string;
 };
 
 export async function resolveWechatWorkBundle(admin: SupabaseClient): Promise<WechatWorkBundle | null> {
@@ -55,7 +58,13 @@ export async function resolveWechatWorkBundle(admin: SupabaseClient): Promise<We
   if (row?.secret) {
     try {
       const parsed = JSON.parse(row.secret) as WechatWorkBundle;
-      if (parsed.corp_secret || parsed.corp_id) return parsed;
+      if (parsed.corp_secret || parsed.corp_id) {
+        return {
+          ...parsed,
+          proxy_url: parsed.proxy_url?.trim() || readFirstEnv(['WECHAT_WORK_PROXY_URL']) || undefined,
+          proxy_secret: parsed.proxy_secret?.trim() || readFirstEnv(['WECHAT_WORK_PROXY_SECRET']) || undefined,
+        };
+      }
     } catch {
       /* 非 JSON 时视为纯 corpsecret */
       return {

@@ -51,3 +51,34 @@ export function formatHttpNonJsonError(
   const snippet = bodyText.replace(/\s+/g, ' ').slice(0, 160);
   return `${hint502}${serviceLabel}返回HTTP ${status}且非JSON（Content-Type: ${contentType || '无'}）${snippet ? `：${snippet}` : ''}`;
 }
+
+/**
+ * 从任意类型的 catch 参数中安全提取可读错误消息。
+ * 解决 `String(err)` 产生 `[object Object]` 的问题。
+ *
+ * @param e  catch 捕获的异常值（unknown）
+ * @param fallback  当无法提取任何消息时的兜底文案（默认"未知错误"）
+ */
+export function errorMessageFromUnknown(e: unknown, fallback = '未知错误'): string {
+  if (e == null) return fallback;
+  if (e instanceof Error) return e.message || fallback;
+  if (typeof e === 'object' && 'message' in e) {
+    const msg = (e as { message: unknown }).message;
+    if (typeof msg === 'string' && msg.length > 0 && msg !== 'undefined') return msg;
+    return fallback;
+  }
+  if (typeof e === 'string') return e || fallback;
+  try {
+    const str = String(e);
+    if (str === '[object Object]') {
+      const obj = e as Record<string, unknown>;
+      if ('error' in obj && typeof obj.error === 'string') return obj.error;
+      if ('details' in obj && typeof obj.details === 'string') return obj.details;
+      if ('statusText' in obj && typeof obj.statusText === 'string') return obj.statusText;
+      return fallback;
+    }
+    return str;
+  } catch {
+    return fallback;
+  }
+}

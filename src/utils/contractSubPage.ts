@@ -1,5 +1,12 @@
 import { createApproval } from '../services/approvalService';
+import {
+  isSubmitApprovalModalAvailable,
+  openSubmitApprovalWithRetry,
+} from './submitApprovalBridge';
+import { resolveProjectIdForApprovalSource } from '../services/approvalApproverService';
 import { getStoredUser } from './sessionUser';
+
+export type { SubmitApprovalOpenConfig } from '../services/approvalApproverService';
 
 export {
   alertMissingRequiredFields,
@@ -19,9 +26,28 @@ export async function tryCreateApproval(
   sourceType: string,
   sourceId: string,
   sourceName: string,
+  options?: {
+    projectId?: string | null;
+    summaryRows?: { label: string; value: string }[];
+  },
 ): Promise<boolean> {
   const user = getStoredUser();
   if (!user.id) return false;
+
+  const projectId =
+    options?.projectId !== undefined
+      ? options.projectId
+      : await resolveProjectIdForApprovalSource(sourceType, sourceId);
+
+  const modalResult = await openSubmitApprovalWithRetry({
+    sourceType,
+    sourceId,
+    sourceName,
+    projectId,
+    summaryRows: options?.summaryRows,
+  });
+  if (modalResult !== null) return modalResult;
+
   try {
     const row = await createApproval(sourceType, sourceId, sourceName, user.id);
     if (!row) {
@@ -36,5 +62,7 @@ export async function tryCreateApproval(
 }
 
 export function createSuccessMessage(approvalSubmitted: boolean): string {
-  return approvalSubmitted ? '创建成功，已提交审批' : '创建成功（未配置审批流程，未提交审批）';
+  if (approvalSubmitted) return '创建成功，已提交审批';
+  if (isSubmitApprovalModalAvailable()) return '创建成功（未提交审批或已取消）';
+  return '创建成功（未配置审批流程，未提交审批）';
 }

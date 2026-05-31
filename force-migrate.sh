@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ -z "${DB_PASSWORD:-}" ]; then
+  echo "错误: 请设置环境变量 DB_PASSWORD 后运行此脚本"
+  echo "用法: DB_PASSWORD=your_pass bash force-migrate.sh"
+  exit 1
+fi
+
 export PGHOST="db.wlkrdylgojkhgfzvcagc.supabase.co"
 export PGPORT="5432"
 export PGUSER="postgres"
-export PGPASSWORD="Hbhc2018."
+export PGPASSWORD="${DB_PASSWORD}"
 export PGDATABASE="postgres"
 
 SQL_FILE="migrations/20260517150000_invoice_association_fields.sql"
@@ -35,7 +41,7 @@ const client = new Client({
   host: 'aws-0-ap-southeast-1.pooler.supabase.com',
   port: 5432,
   user: 'postgres.wlkrdylgojkhgfzvcagc',
-  password: 'Hbhc2018.',
+  password: process.env.DB_PASSWORD,
   database: 'postgres',
   ssl: { rejectUnauthorized: false }
 });

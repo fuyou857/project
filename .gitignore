@@ -11,7 +11,11 @@
 .env
 .env.local
 .env.*.local
+.env.wechat-proxy
+.env.production
+.env.sensitive
 scripts/.e2e-credentials.local
+.super-admin-credentials.txt
 .playwright-browsers/
 *.pem
 *.key
@@ -36,6 +40,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .pnpm-store/
+
+# 部署产物
+dist/
+dist.bak/
+releases/
+logs/
 
 # Python
 __pycache__/
@@ -158,3 +168,5 @@ ERROR
 
 # Cursor 本地 MCP 配置（团队规则保留在 .cursor/rules/）
 .cursor/mcp.json
+.env.wechat-proxy
+.env.sensitive

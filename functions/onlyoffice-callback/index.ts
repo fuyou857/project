@@ -13,19 +13,16 @@
  * 并在 `supabase/config.toml` 为本函数设置 `verify_jwt = false`（见仓库已加段落）。
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const BUCKET = 'files';
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+let _reqOrigin: string | null = null;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...cors },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(_reqOrigin) },
   });
 }
 
@@ -37,8 +34,9 @@ type OnlyOfficeCallbackBody = {
 };
 
 Deno.serve(async (req: Request) => {
+  _reqOrigin = req.headers.get("origin");
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: cors });
+    return new Response(null, { status: 204, header...getCorsHeaders(_reqOrigin) });
   }
   if (req.method !== 'POST') {
     return json({ error: 1 }, 405);

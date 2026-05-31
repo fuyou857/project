@@ -20,6 +20,20 @@ import fitz  # PyMuPDF
 
 app = FastAPI(title="contract-convert-service", version="1.0.0")
 
+DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
+app.debug = DEBUG
+
+# 全局异常处理器
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.exception(f"Unhandled error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"ok": False, "message": str(exc) if DEBUG else "服务器内部错误，请稍后重试"}
+    )
+
 SECRET = os.environ.get("CONTRACT_CONVERT_SECRET", "").strip()
 MAX_DOWNLOAD_BYTES = int(os.environ.get("MAX_DOWNLOAD_BYTES", str(80 * 1024 * 1024)))
 _LIBREOFFICE_BIN = "soffice"

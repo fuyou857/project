@@ -19,6 +19,8 @@ export interface User {
   created_at: string;
   updated_at: string | null;
   last_login_at: string | null;
+  wechat_work_userid?: string | null;
+  wechat_work_name?: string | null;
   /** 前端缓存用：由 isSuperAdmin() 计算，非数据库列 */
   is_super_admin?: boolean;
 }
@@ -133,7 +135,7 @@ export async function getProjects(): Promise<Project[]> {
  * 创建新用户（Auth + public.users 由 Edge Function `admin-user-ops` 完成）
  */
 export async function createUser(userData: {
-  email: string;
+  email?: string;
   password: string;
   username: string;
   real_name?: string;
@@ -145,7 +147,7 @@ export async function createUser(userData: {
 }): Promise<User> {
   const res = await invokeAdminUserOps<{ ok: boolean; userId: string }>({
     action: 'createUser',
-    email: userData.email,
+    email: userData.email ?? '',
     password: userData.password,
     username: userData.username,
     real_name: userData.real_name ?? null,
@@ -178,6 +180,8 @@ export async function updateUser(userId: string, userData: {
   role_ids?: string[];
   project_ids?: string[];
   status?: 'active' | 'disabled';
+  wechat_work_userid?: string | null;
+  wechat_work_name?: string | null;
 }): Promise<User> {
   const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString()
@@ -190,6 +194,12 @@ export async function updateUser(userId: string, userData: {
   if (userData.role_ids !== undefined) updateData.role_ids = userData.role_ids;
   if (userData.project_ids !== undefined) updateData.project_ids = userData.project_ids;
   if (userData.status !== undefined) updateData.status = userData.status;
+  if (userData.wechat_work_userid !== undefined) {
+    updateData.wechat_work_userid = userData.wechat_work_userid || null;
+  }
+  if (userData.wechat_work_name !== undefined) {
+    updateData.wechat_work_name = userData.wechat_work_name || null;
+  }
 
   const { error } = await supabase
     .from('users')

@@ -18,6 +18,15 @@ const ProjectSupplier = lazy(() => import('../pages/ProjectSupplier'));
 const Finance = lazy(() => import('../pages/Finance'));
 const Materials = lazy(() => import('../pages/Materials'));
 const Machines = lazy(() => import('../pages/Machines'));
+const MachineShift = lazy(() => import('../pages/machineShift/MachineShift'));
+const MachineManagement = lazy(() => import('../pages/machine/MachineManagement'));
+const MaterialManagement = lazy(() => import('../pages/material/MaterialManagement'));
+const PurchaseOrderManagement = lazy(() => import('../pages/purchaseOrder/PurchaseOrderManagement'));
+const InboundManagement = lazy(() => import('../pages/inbound/InboundManagement'));
+const FixedAssetManagement = lazy(() => import('../pages/fixedAsset/FixedAssetManagement'));
+const IssueManagement = lazy(() => import('../pages/issue/IssueManagement'));
+const MobileScanPage = lazy(() => import('../pages/mobile/MobileScanPage'));
+const MobileMachineShift = lazy(() => import('../pages/mobile/MobileMachineShift'));
 const Labor = lazy(() => import('../pages/Labor'));
 const SealManagement = lazy(() => import('../pages/SealManagement'));
 const Admin = lazy(() => import('../pages/Admin'));
@@ -153,9 +162,19 @@ const routes: RouteConfig[] = [
   { path: '/materials/inbound', element: <ProtectedLayout><LazyPage><Materials /></LazyPage></ProtectedLayout> },
   { path: '/materials', element: <ProtectedLayout><LazyPage><Materials /></LazyPage></ProtectedLayout> },
 
-  { path: '/equipment/list', element: <ProtectedLayout><LazyPage><Machines /></LazyPage></ProtectedLayout> },
-  { path: '/equipment/report', element: <ProtectedLayout><LazyPage><Machines /></LazyPage></ProtectedLayout> },
+  { path: '/machines/list', element: <ProtectedLayout><LazyPage><Machines /></LazyPage></ProtectedLayout> },
+  { path: '/machines/report', element: <ProtectedLayout><LazyPage><Machines /></LazyPage></ProtectedLayout> },
   { path: '/machines', element: <ProtectedLayout><LazyPage><Machines /></LazyPage></ProtectedLayout> },
+
+  { path: '/machine-shift', element: <ProtectedLayout><LazyPage><MachineShift /></LazyPage></ProtectedLayout> },
+  { path: '/machine-management', element: <ProtectedLayout><LazyPage><MachineManagement /></LazyPage></ProtectedLayout> },
+  { path: '/material', element: <ProtectedLayout><LazyPage><MaterialManagement /></LazyPage></ProtectedLayout> },
+  { path: '/purchase-order', element: <ProtectedLayout><LazyPage><PurchaseOrderManagement /></LazyPage></ProtectedLayout> },
+  { path: '/inbound', element: <ProtectedLayout><LazyPage><InboundManagement /></LazyPage></ProtectedLayout> },
+  { path: '/fixed-asset', element: <ProtectedLayout><LazyPage><FixedAssetManagement /></LazyPage></ProtectedLayout> },
+  { path: '/issue', element: <ProtectedLayout><LazyPage><IssueManagement /></LazyPage></ProtectedLayout> },
+  { path: '/mobile/scan', element: <LazyPage><MobileScanPage /></LazyPage> },
+  { path: '/mobile/machine-shift', element: <LazyPage><MobileMachineShift /></LazyPage> },
 
   { path: '/labor/report', element: <ProtectedLayout><LazyPage><Labor /></LazyPage></ProtectedLayout> },
   { path: '/labor/audit', element: <ProtectedLayout><LazyPage><Labor /></LazyPage></ProtectedLayout> },

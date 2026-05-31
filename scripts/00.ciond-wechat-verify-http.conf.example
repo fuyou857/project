@@ -1,0 +1,27 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name www.ciond.com ciond.com;
+
+    location = /WW_verify_Kab2AzoP9HWQUQVH.txt {
+        default_type text/plain;
+        charset utf-8;
+        add_header Cache-Control "no-store";
+        return 200 'Kab2AzoP9HWQUQVH';
+    }
+
+    location ~ ^/WW_verify_.*\.txt$ {
+        root /www/wwwroot/ciond;
+        default_type text/plain;
+        charset utf-8;
+        add_header Cache-Control "no-store";
+        try_files $uri =404;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+
+    access_log  /www/wwwlogs/www.ciond.com.log;
+    error_log   /www/wwwlogs/www.ciond.com.error.log;
+}

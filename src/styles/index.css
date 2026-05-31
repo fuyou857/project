@@ -1,14 +1,10 @@
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --ui-radius: 0.75rem;
-    --ui-border: 214 32% 91%;
-    --ui-ring: 217 91% 60%;
-  }
-
   html {
     @apply antialiased;
   }
@@ -19,40 +15,109 @@
 }
 
 @layer components {
+  /* ---- 页面标题 ---- */
   .ui-page-title {
     @apply text-display font-semibold text-gray-900;
   }
 
+  /* ---- 卡片容器 ---- */
   .ui-card {
     @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm;
   }
 
+  /* ---- 区块标题 ---- */
   .ui-section-title {
     @apply text-title font-semibold text-gray-800;
   }
 
+  /* ---- 标签文字 ---- */
   .ui-label {
     @apply text-caption text-gray-600;
   }
 
+  /* ---- 输入框 ---- */
   .ui-input {
     @apply rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25;
   }
 
+  /* ---- 表格外层容器 ---- */
   .ui-table-wrap {
     @apply overflow-x-auto rounded-xl border border-gray-200 bg-white;
   }
 
+  /* ---- 数字右对齐 ---- */
   .ui-numeric {
     @apply text-right tabular-nums;
   }
 
+  /* ---- 主内容区域 ---- */
   .ui-main-inner {
     @apply mx-auto w-full max-w-content flex-1 px-4 py-4 sm:px-5;
   }
 
-  .cost-invoice-preview img {
-    @apply shadow-md rounded-sm;
+  /* ======== 语义徽章 ======== */
+
+  /* 成功 / 已发布 / 已盖章 */
+  .badge-success {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+    border: 1px solid var(--color-success-border);
+  }
+
+  /* 警告 / 待处理 */
+  .badge-warning {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    border: 1px solid var(--color-warning-border);
+  }
+
+  /* 危险 / 已删除 */
+  .badge-danger {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    border: 1px solid var(--color-danger-border);
+  }
+
+  /* 信息 / 处理中 */
+  .badge-info {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background-color: var(--color-info-bg);
+    color: var(--color-info-text);
+    border: 1px solid var(--color-info-border);
+  }
+
+  /* 中性 / 草稿 */
+  .badge-neutral {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background-color: var(--color-neutral-bg);
+    color: var(--color-neutral-text);
+    border: 1px solid var(--color-neutral-border);
+  }
+
+  /* ======== 语义按钮 ======== */
+
+  .btn-sm {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-offset-1;
+  }
+
+  .btn-action-primary {
+    @apply btn-sm border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100;
+  }
+
+  .btn-action-danger {
+    @apply btn-sm border border-red-200 bg-red-50 text-red-800 hover:bg-red-100;
+  }
+
+  .btn-action-default {
+    @apply btn-sm border border-gray-200 bg-white text-gray-700 hover:bg-gray-50;
+  }
+
+  /* 下载 PDF 链接按钮 */
+  .btn-download-pdf {
+    @apply inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-800 hover:bg-blue-100;
   }
 }
 
@@ -62,25 +127,24 @@
   box-sizing: border-box;
 }
 
+/* ---- 自定义滚动条 ---- */
 .scrollbar-thin::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
-
 .scrollbar-thin::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
-
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
 }
-
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
 }
 
+/* 隐藏 number input 的 spinner */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -90,7 +154,7 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* 响应式样式 - 移动端适配 */
+/* ---- 响应式样式 ---- */
 @media (max-width: 1024px) {
   .sidebar-hidden {
     display: none !important;
@@ -101,16 +165,13 @@ input[type="number"] {
   .mobile-scroll-container {
     -webkit-overflow-scrolling: touch;
   }
-
   .mobile-table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-
   .mobile-table-wrapper table {
     min-width: 800px;
   }
-
   .mobile-modal {
     max-width: 100% !important;
     width: 100% !important;
@@ -120,7 +181,6 @@ input[type="number"] {
   }
 }
 
-/* 确保按钮在移动端足够大容易点击 */
 @media (max-width: 640px) {
   .mobile-touch-target {
     min-height: 44px;
@@ -128,17 +188,11 @@ input[type="number"] {
   }
 }
 
-/* 任务列表：紧急优先级行闪烁描边 */
+/* ---- 紧急优先级脉冲动画 ---- */
 @keyframes task-urgent-pulse {
-  0%,
-  100% {
-    box-shadow: inset 0 0 0 2px #ff4d4f;
-  }
-  50% {
-    box-shadow: inset 0 0 0 2px #ff7875;
-  }
+  0%, 100% { box-shadow: inset 0 0 0 2px #ff4d4f; }
+  50%      { box-shadow: inset 0 0 0 2px #ff7875; }
 }
-
 .task-row-urgent {
   animation: task-urgent-pulse 1.5s ease-in-out infinite;
 }

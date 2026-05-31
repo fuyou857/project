@@ -236,6 +236,8 @@ export default function OnlyOfficeEditor({
   const [bootErr, setBootErr] = useState<string | null>(null);
   const [runtimeErr, setRuntimeErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editorReady, setEditorReady] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const onReadyRef = useRef(onDocumentReady);
   onReadyRef.current = onDocumentReady;
 
@@ -243,6 +245,8 @@ export default function OnlyOfficeEditor({
     setBootErr(null);
     setRuntimeErr(null);
     setLoading(true);
+    setEditorReady(false);
+    setLastSavedAt(null);
 
     const url = (documentUrl || '').trim();
     if (!url) {
@@ -355,8 +359,20 @@ export default function OnlyOfficeEditor({
             if (!disposed) markIframeReady();
           },
           onDocumentReady: () => {
-            if (!disposed) markIframeReady();
+            if (!disposed) {
+              markIframeReady();
+              setEditorReady(true);
+              setLoading(false);
+            }
             onReadyRef.current?.();
+          },
+          onDocumentSave: () => {
+            if (!disposed) {
+              setLastSavedAt(Date.now());
+            }
+          },
+          onRequestSave: () => {
+            /* 用户主动点击保存按钮，onDocumentSave 随后触发 */
           },
           onError: (e: { data?: { errorCode?: number; errorDescription?: string } }) => {
             if (disposed) return;
@@ -528,6 +544,27 @@ export default function OnlyOfficeEditor({
           className="w-full h-full onlyoffice-host relative"
         />
       </div>
+      {editMode && editorReady && !bootErr && !runtimeErr ? (
+        <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-1.5 text-xs text-gray-500 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-500" aria-hidden />
+            编辑器已就绪
+          </span>
+          <span>
+            {lastSavedAt
+              ? `最近保存：${new Date(lastSavedAt).toLocaleTimeString('zh-CN')}`
+              : '自动保存已启用'}
+          </span>
+        </div>
+      ) : null}
+      {editMode && !bootErr && !runtimeErr && !editorReady && !loading ? (
+        <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-1.5 text-xs text-gray-500 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-yellow-500" aria-hidden />
+            等待就绪
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

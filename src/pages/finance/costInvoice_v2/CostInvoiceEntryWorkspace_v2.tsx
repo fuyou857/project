@@ -140,7 +140,7 @@ export default function CostInvoiceEntryWorkspace_v2({
             ocrStatus={ocr.ocrUiStatus}
             progress={ocr.progress}
             progressLabel={ocr.progressLabel}
-            disabled={busy || !interactionReady}
+            disabled={busy}
           />
         </div>
 

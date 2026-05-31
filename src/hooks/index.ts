@@ -8,3 +8,4 @@ export { useContractReminders } from './useContractReminders';
 export { useContractSideList } from './useContractSideList';
 export { useEntityListLoader } from './useEntityListLoader';
 export { useInvoiceOcrForm, invoiceOcrStatusLabel, type InvoiceOcrController } from './useInvoiceOcrForm';
+export { useDebouncedValue } from './useDebouncedValue';

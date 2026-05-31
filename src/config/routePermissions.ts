@@ -78,6 +78,7 @@ const PREFIX_RULES_SORTED: PrefixRule[] = sortPrefixRules([
   { kind: 'prefix', path: '/materials', keys: ['物资清单'], exact: true },
   { kind: 'prefix', path: '/labor', keys: ['产值上报'], exact: true },
   { kind: 'prefix', path: '/machines', keys: ['机械台账'], exact: true },
+  { kind: 'prefix', path: '/machine-shift', keys: ['机械台账'], exact: true },
   { kind: 'prefix', path: '/admin', keys: TOP_PATH_REQUIRES_ANY_PERM['/admin'] ?? [], exact: true },
   {
     kind: 'prefix',
@@ -105,6 +106,17 @@ export function getRequiredPermissionKeysForPath(pathname: string): string[] | n
 
   /** 任务管理下所有子路由：具备「我发布的任务」或「我的待办任务」任一即可（与菜单始终展示一致，避免新菜单键未勾选角色时整模块消失） */
   if (p === '/tasks' || p.startsWith('/tasks/')) {
+    const keys = TOP_PATH_REQUIRES_ANY_PERM['/tasks'] ?? [];
+    return keys.length > 0 ? keys : null;
+  }
+
+  /** 审批中心、消息中心：与 expandPermissionKeys 一致，具备任一任务管理子权限即可访问 */
+  if (
+    p === '/approval' ||
+    p.startsWith('/approval/') ||
+    p === '/messages' ||
+    p.startsWith('/messages/')
+  ) {
     const keys = TOP_PATH_REQUIRES_ANY_PERM['/tasks'] ?? [];
     return keys.length > 0 ? keys : null;
   }

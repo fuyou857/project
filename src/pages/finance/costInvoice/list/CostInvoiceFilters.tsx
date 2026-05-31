@@ -34,7 +34,10 @@ export default function CostInvoiceFilters({
   invoiceNumberSuggestions,
 }: Props) {
   const projectOptions = projectSelectOptions(projects, '全部项目');
-  const contractOptions = contractSelectOptions(expenseContracts, '全部支出合同');
+  const contractOptions = contractSelectOptions(
+    expenseContracts.map((c) => ({ ...c, contract_code: c.contract_code ?? undefined })),
+    '全部支出合同',
+  );
   const userOptions = useMemo(() => [
     { value: '', label: '全部' },
     ...allUsers.map(u => ({ value: u.id, label: u.real_name || u.username }))

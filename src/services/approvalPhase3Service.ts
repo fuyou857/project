@@ -114,8 +114,9 @@ export async function userCanApproveStep(
   userId: string,
   step: ApprovalFlowStep,
   sourceType: string,
+  approvalId?: string,
 ): Promise<boolean> {
-  const primary = await resolveApproverUserIds(step);
+  const primary = await resolveApproverUserIds(step, approvalId);
   if (primary.includes(userId)) return true;
   const delegMap = await loadActiveDelegationMap(sourceType);
   for (const delegatorId of primary) {
@@ -147,7 +148,7 @@ export async function sendApprovalReminder(approvalId: string, requesterId: stri
   const current = steps.find((s) => s.step_order === approval.current_step);
   if (!current) throw new Error('当前审批步骤无效');
 
-  const approverIds = await resolveApproverUserIds(current);
+  const approverIds = await resolveApproverUserIds(current, approvalId);
   if (approverIds.length === 0) throw new Error('当前步骤未配置审批人');
 
   const { error: insErr } = await supabase.from('approval_reminders').insert({
@@ -206,7 +207,7 @@ export async function batchApprove(
   for (const a of approvals) {
     const steps = await getApprovalSteps(a.source_type);
     const current = steps.find((s) => s.step_order === a.current_step);
-    if (!current || !(await userCanApproveStep(approverId, current, a.source_type))) {
+    if (!current || !(await userCanApproveStep(approverId, current, a.source_type, a.id))) {
       throw new Error(`您无权批量处理「${a.source_name}」`);
     }
   }

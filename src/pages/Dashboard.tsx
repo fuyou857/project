@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FaProjectDiagram, FaHandshake, FaMoneyBillWave, FaExclamationTriangle, FaPlus, FaArrowRight, FaClipboardList } from 'react-icons/fa';
+import { FaProjectDiagram, FaHandshake, FaMoneyBillWave, FaExclamationTriangle, FaPlus, FaArrowRight, FaClipboardList, FaSyncAlt } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabase/client';
 import { useCompany } from '../components/Layout';
@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { syncDeadlineNotifications } from '../services/notificationService';
 import { fetchUpcomingInvolvedTasks, type TaskRow } from '../services/taskService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import { errorMessageFromUnknown } from '../utils/httpErrorMessage';
 
 type DashboardProjectRow = { id: string; name?: string | null; created_at?: string | null };
 type DashboardPaymentRow = {
@@ -49,6 +50,7 @@ export default function Dashboard() {
   const [projects, setProjects] = useState<DashboardProjectRow[]>([]);
   const [payments, setPayments] = useState<DashboardPaymentRow[]>([]);
   const [invoices, setInvoices] = useState<DashboardInvoiceRow[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const getCompanyIds = useCallback(() => {
     if (!currentCompany) return [];
@@ -64,6 +66,7 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     try {
+      setFetchError(null);
       const companyIds = getCompanyIds();
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -75,6 +78,7 @@ export default function Dashboard() {
       const projRes = await projQuery;
       if (projRes.error) {
         console.error('[Dashboard] projects', projRes.error);
+        setFetchError(errorMessageFromUnknown(projRes.error, '加载项目数据失败'));
         return;
       }
       const projectIds = (projRes.data ?? []).map((p) => p.id);
@@ -155,8 +159,9 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error('[Dashboard] fetchData', e);
+      setFetchError(errorMessageFromUnknown(e, '加载仪表盘数据失败，请刷新重试'));
     }
-  }, [user?.id, getCompanyIds, currentCompany, companies]);
+  }, [user?.id, getCompanyIds]);
 
   useEffect(() => {
     void fetchData();
@@ -212,6 +217,21 @@ export default function Dashboard() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+      {fetchError && (
+        <motion.div variants={item} className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FaExclamationTriangle className="text-red-500 w-5 h-5" />
+            <span className="text-red-700 text-sm">{fetchError}</span>
+          </div>
+          <button
+            onClick={() => void fetchData()}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+          >
+            <FaSyncAlt className="w-3 h-3" />
+            重试
+          </button>
+        </motion.div>
+      )}
       <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {statsData.map((stat) => (
           <motion.button

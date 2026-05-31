@@ -92,12 +92,12 @@ async function fileForOcrUpload(params: {
  * 异常值过滤：检查并移除异常数值
  */
 function normalizeAndFilter(payload: InvoiceOcrPayload): InvoiceOcrPayload {
-  const filtered = { ...payload };
+  const filtered = { ...payload } as Record<string, unknown>;
   
   const ABNORMAL_NUMBERS = ['343', '826', '1082', '9.16', '343.00', '826.00', '1082.00'];
   const ABNORMAL_STRINGS = new Set(ABNORMAL_NUMBERS);
   
-  for (const key of Object.keys(filtered) as Array<keyof InvoiceOcrPayload>) {
+  for (const key of Object.keys(filtered)) {
     const value = filtered[key];
     if (typeof value === 'string') {
       if (ABNORMAL_STRINGS.has(value)) {
@@ -106,7 +106,7 @@ function normalizeAndFilter(payload: InvoiceOcrPayload): InvoiceOcrPayload {
     }
   }
   
-  return filtered;
+  return filtered as InvoiceOcrPayload;
 }
 
 /**

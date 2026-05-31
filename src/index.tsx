@@ -6,6 +6,14 @@ import './styles/index.css';
 import './utils/uiMetrics';
 import './services/operationTracker';
 
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Global Error] Unhandled Promise Rejection:', event.reason);
+});
+
+window.addEventListener('error', (event) => {
+  console.error('[Global Error] Uncaught Error:', event.error);
+});
+
 if (process.env.NODE_ENV === 'production' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/sw.js').catch(() => {});

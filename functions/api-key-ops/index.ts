@@ -13,16 +13,17 @@ import {
 '../_shared/systemApiKeyRegistry.ts';
 import { computeKeyStatus } from '../_shared/apiKeyStatus.ts';
 import { getSystemApiKey, invalidateSystemApiKeyCache } from '../_shared/systemApiKeys.ts';
+import type { WechatWorkBundle } from '../_shared/resolveIntegrationConfig.ts';
+import { fetchWechatAccessToken, isWechatProxyConfigured } from '../_shared/wechatWorkApi.ts';
 
-const corsBase = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
+
+let _reqOrigin: string | null = null;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsBase }
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(_reqOrigin) },
   });
 }
 
@@ -137,7 +138,67 @@ async function syncLocalBackup(admin: ReturnType<typeof createClient>) {
   );
 }
 
-async function testConnectivity(apiUrl: string | null, secret: string): Promise<{ok: boolean;message: string;}> {
+function parseWechatWorkBundle(secret: string, apiUrl: string | null): WechatWorkBundle | null {
+  try {
+    const parsed = JSON.parse(secret) as WechatWorkBundle;
+    if (!parsed.corp_id?.trim() || !parsed.corp_secret?.trim()) return null;
+    return {
+      corp_id: parsed.corp_id.trim(),
+      agent_id: String(parsed.agent_id ?? '').trim(),
+      redirect_uri: (parsed.redirect_uri?.trim() || apiUrl?.trim() || ''),
+      corp_secret: parsed.corp_secret.trim(),
+      proxy_url: parsed.proxy_url?.trim() || readFirstEnv(['WECHAT_WORK_PROXY_URL']) || undefined,
+      proxy_secret: parsed.proxy_secret?.trim() || readFirstEnv(['WECHAT_WORK_PROXY_SECRET']) || undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function apiUrlFromWechatSecret(secret: string, apiUrl: string | null): string | null {
+  if (apiUrl?.trim()) return apiUrl.trim();
+  try {
+    const parsed = JSON.parse(secret) as { redirect_uri?: string };
+    return parsed.redirect_uri?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+async function testWechatWorkConnectivity(
+  apiUrl: string | null,
+  secret: string,
+): Promise<{ ok: boolean; message: string }> {
+  const bundle = parseWechatWorkBundle(secret, apiUrl);
+  if (!bundle) {
+    return {
+      ok: false,
+      message: '密钥须为 JSON，且包含 corp_id、corp_secret（可选 redirect_uri）',
+    };
+  }
+  if (!isWechatProxyConfigured(bundle)) {
+    return {
+      ok: false,
+      message:
+        '未配置固定 IP 代理（会报 60020）。在 JSON 增加 proxy_url、proxy_secret，或设置 Edge Secrets WECHAT_WORK_PROXY_*，见 docs/WECHAT_WORK_PROXY_SETUP.md',
+    };
+  }
+  try {
+    await fetchWechatAccessToken(bundle);
+    return { ok: true, message: '企业微信 gettoken 成功' };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+async function testConnectivity(
+  keyCode: string | null,
+  apiUrl: string | null,
+  secret: string,
+): Promise<{ ok: boolean; message: string }> {
+  if (keyCode === 'wechat_work') {
+    return testWechatWorkConnectivity(apiUrl, secret);
+  }
   const url = apiUrl?.trim() || (secret.startsWith('http') ? secret : '');
   if (!url) return { ok: false, message: '未配置 api_url' };
   try {
@@ -176,9 +237,11 @@ dedupeKey: string)
 }
 
 Deno.serve(async (req) => {
+  _reqOrigin = req.headers.get('origin');
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
-      headers: { ...corsBase, 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
+      headers: { ...getCorsHeaders(_reqOrigin), 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
     });
   }
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -380,11 +443,14 @@ Deno.serve(async (req) => {
           const keyCode = String(body.key_code ?? '').trim();
           const name = String(body.name ?? '').trim();
           const secretKey = String(body.secret_key ?? '');
-          const apiUrl = body.api_url != null ? String(body.api_url).trim() : null;
+          let apiUrl = body.api_url != null ? String(body.api_url).trim() : null;
           if (!keyCode || !/^[a-z][a-z0-9_]{1,63}$/.test(keyCode)) {
             return json({ error: 'key_code 须为小写字母开头的标识' }, 400);
           }
           if (!name) return json({ error: '缺少接口名称' }, 400);
+          if (keyCode === 'wechat_work' && secretKey) {
+            apiUrl = apiUrlFromWechatSecret(secretKey, apiUrl);
+          }
           if (!secretKey && !apiUrl) return json({ error: '须填写密钥或请求地址' }, 400);
 
           const encrypted = await encryptSecret(secretKey || apiUrl || '');
@@ -424,7 +490,7 @@ Deno.serve(async (req) => {
             detail: { name, hint }
           });
 
-          const test = await testConnectivity(apiUrl, secretKey);
+          const test = await testConnectivity(keyCode, apiUrl, secretKey);
           return json({ ok: true, key: toPublicRow(inserted as DbRow), connectivity: test });
         }
 
@@ -453,6 +519,13 @@ Deno.serve(async (req) => {
             patch.fallback_secret_encrypted = oldEnc;
             patch.secret_key_encrypted = await encryptSecret(newSecret);
             patch.secret_key_hint = secretHint(newSecret);
+            if (keyCode === 'wechat_work') {
+              const resolvedUrl = apiUrlFromWechatSecret(
+                newSecret,
+                (patch.api_url as string | null) ?? (existing as DbRow).api_url,
+              );
+              if (resolvedUrl) patch.api_url = resolvedUrl;
+            }
           }
 
           const row = { ...existing, ...patch } as DbRow;
@@ -481,7 +554,7 @@ Deno.serve(async (req) => {
           });
 
           const secretForTest = newSecret || (await decryptSecret((updated as DbRow).secret_key_encrypted));
-          const test = await testConnectivity((updated as DbRow).api_url, secretForTest);
+          const test = await testConnectivity(keyCode, (updated as DbRow).api_url, secretForTest);
           return json({ ok: true, key: toPublicRow(updated as DbRow), connectivity: test });
         }
 
@@ -513,7 +586,7 @@ Deno.serve(async (req) => {
           const keyCode = String(body.key_code ?? '').trim();
           const got = await getSystemApiKey(admin, keyCode);
           if (!got) return json({ ok: false, message: '密钥不可用' });
-          const test = await testConnectivity(got.apiUrl, got.secret);
+          const test = await testConnectivity(keyCode, got.apiUrl, got.secret);
           await writeLog(admin, {
             key_code: keyCode,
             action: 'test',
@@ -534,7 +607,7 @@ Deno.serve(async (req) => {
               results.push({ key_code: r.key_code, ok: false, message: '不可用' });
               continue;
             }
-            const t = await testConnectivity(got.apiUrl, got.secret);
+            const t = await testConnectivity(r.key_code, got.apiUrl, got.secret);
             results.push({ key_code: r.key_code, ...t });
           }
           return json({ ok: true, results });

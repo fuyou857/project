@@ -52,7 +52,7 @@ export async function fetchSourceAmount(
     .eq('id', sourceId)
     .maybeSingle();
   if (error || !data) return null;
-  const row = data as Record<string, unknown>;
+  const row = data as unknown as Record<string, unknown>;
   for (const col of cfg.columns) {
     const v = row[col];
     if (v != null && v !== '') return Number(v);

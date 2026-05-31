@@ -15,7 +15,9 @@
 | WECHAT_WORK_CORP_ID | 企业微信企业ID | wx1234567890abcdef |
 | WECHAT_WORK_AGENT_ID | 自建应用ID | 1000001 |
 | WECHAT_WORK_SECRET | 应用密钥 | abc123xyz789 |
-| WECHAT_WORK_REDIRECT_URI | 授权回调地址 | https://your-domain.com/api/auth/wechat-work/callback |
+| WECHAT_WORK_REDIRECT_URI | 扫码/OAuth 回调（登录页） | https://www.ciond.com/login |
+
+> 当前实现通过 Supabase Edge Function `wechat-work-auth` 处理登录/绑定，不再使用 `/api/auth/wechat-work/*`。详见 `docs/wechat-work-login.md`。
 
 ---
 

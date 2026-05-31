@@ -9,3 +9,15 @@ verify_jwt = false
 # ONLYOFFICE 文档服务器 POST 保存回调，无 Supabase 用户 JWT
 [functions.onlyoffice-callback]
 verify_jwt = false
+
+# 扫码登录入口无 JWT；绑定类 action 在函数内校验 Bearer
+[functions.wechat-work-auth]
+verify_jwt = false
+
+# 管理员用户操作：函数内自行校验 super_admin JWT
+[functions.admin-user-ops]
+verify_jwt = false
+
+# API 密钥中心：函数内校验权限
+[functions.api-key-ops]
+verify_jwt = false

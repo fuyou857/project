@@ -176,6 +176,11 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
     children: [
       { path: '/materials/list', icon: FaTools, label: '物资清单' },
       { path: '/materials/inbound', icon: FaTools, label: '物资入库' },
+      { path: '/material', icon: FaTools, label: '物资档案' },
+      { path: '/purchase-order', icon: FaTools, label: '采购订单' },
+      { path: '/inbound', icon: FaTools, label: '入库管理' },
+      { path: '/fixed-asset', icon: FaTools, label: '固定资产' },
+      { path: '/issue', icon: FaTools, label: '领料管理' },
     ],
   },
   {
@@ -183,8 +188,10 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
     icon: FaCogs,
     label: '机械管理',
     children: [
-      { path: '/equipment/list', icon: FaCogs, label: '机械台账' },
-      { path: '/equipment/report', icon: FaCogs, label: '机械报表' },
+      { path: '/machines/list', icon: FaCogs, label: '机械台账' },
+      { path: '/machines/report', icon: FaCogs, label: '机械报表' },
+      { path: '/machine-shift', icon: FaCogs, label: '机械台班' },
+      { path: '/machine-management', icon: FaCogs, label: '机械管理' },
     ],
   },
   {

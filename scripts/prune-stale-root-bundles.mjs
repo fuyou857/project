@@ -14,6 +14,9 @@ const distDir = path.join(root, 'dist');
 
 const BUNDLE_LIKE =
   /^(main|vendors|runtime|common)\.[a-fA-F0-9]+\.(js|css)(\.(gz|br))?$/;
+/** common / vendors 等带 .chunk 的异步包 */
+const NAMED_CHUNK =
+  /^(main|vendors|runtime|common|doc-office|recharts|tiptap)\.[a-fA-F0-9]+\.chunk\.(js|css)(\.(gz|br))?$/;
 /** Webpack 数字 id chunk：如 128.9dda9a202eb14185.chunk.js */
 const NUMBERED_CHUNK =
   /^\d+\.[a-fA-F0-9]+\.chunk\.(js|css)(\.(gz|br))?$/;
@@ -41,7 +44,14 @@ function main() {
 
   for (const name of fs.readdirSync(root)) {
     if (shouldSkipRootFile(name)) continue;
-    if (!BUNDLE_LIKE.test(name) && !NUMBERED_CHUNK.test(name) && !ORPHAN_HEX_CHUNK.test(name)) continue;
+    if (
+      !BUNDLE_LIKE.test(name) &&
+      !NAMED_CHUNK.test(name) &&
+      !NUMBERED_CHUNK.test(name) &&
+      !ORPHAN_HEX_CHUNK.test(name)
+    ) {
+      continue;
+    }
     if (keep.has(name)) continue;
 
     const full = path.join(root, name);

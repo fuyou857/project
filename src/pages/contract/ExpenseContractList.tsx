@@ -11,10 +11,12 @@ import ContractListPagination from '../../components/contract/ContractListPagina
 import ContractDeleteConfirmModal from '../../components/contract/ContractDeleteConfirmModal';
 import ContractReminderDetailModal from '../../components/contract/ContractReminderDetailModal';
 import ApprovalStatusBadge from '../../components/ApprovalStatusBadge';
-import { createApproval } from '../../services/approvalService';
-import { SearchableSelect, SegmentedControl } from '../../components/ui';
+import SubmitApprovalListAction from '../../components/approval/SubmitApprovalListAction';
+import { tryCreateApproval } from '../../utils/contractSubPage';
+import { SearchableSelect, SegmentedControl, Skeleton } from '../../components/ui';
 import { projectSelectOptions } from '../../components/ui/options';
 import { useSingleToast } from '../../hooks/useSingleToast';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useContractReminders } from '../../hooks/useContractReminders';
 import { getStoredUser, isSuperAdminUser } from '../../utils/sessionUser';
 import { readExcelFirstSheetRows, downloadJsonRowsAsXlsx } from '../../utils/excelSheet';
@@ -62,6 +64,7 @@ export default function ExpenseContractList() {
   const [partyBs, setPartyBs] = useState<PartyB[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -71,6 +74,8 @@ export default function ExpenseContractList() {
   const [form, setForm] = useState({ contract_name: '', contract_code: '', project_id: '', party_b_id: '', amount: 0, sign_date: '', status: 'draft' });
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const localFileInputRef = useRef<HTMLInputElement>(null);
+  const isMountedRef = useRef(true);
   
   // 附件相关状态
   const [attachments, setAttachments] = useState<ContractAttachment[]>([]);
@@ -78,7 +83,11 @@ export default function ExpenseContractList() {
   const [generatedContracts, setGeneratedContracts] = useState<any[]>([]);
   const [loadingGeneratedContracts, setLoadingGeneratedContracts] = useState(false);
 
-  useEffect(() => {fetchData();fetchOptions();fetchReminders();}, [page, search, currentCompany]);
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchData();fetchOptions();fetchReminders();
+    return () => { isMountedRef.current = false; };
+  }, [page, debouncedSearch, currentCompany]);
 
   // 加载已生成的合同列表（用于附件选择）
   const loadGeneratedContracts = useCallback(async () => {
@@ -135,6 +144,7 @@ export default function ExpenseContractList() {
 
   async function fetchOptions() {
     const [pRes, pbRes] = await Promise.all([supabase.from('projects').select('id, name'), supabase.from('party_b').select('id, unit_name')]);
+    if (!isMountedRef.current) return;
     if (pRes.data) setProjects(pRes.data);
     if (pbRes.data) setPartyBs(pbRes.data);
   }
@@ -147,8 +157,9 @@ export default function ExpenseContractList() {
     if (companyIds.length > 0) {
       query = query.in('company_id', companyIds);
     }
-    if (search) query = query.ilike('contract_name', `%${search}%`);
+    if (debouncedSearch) query = query.ilike('contract_name', `%${debouncedSearch}%`);
     const { data, count } = await query.range(offset, offset + PAGE_SIZE - 1);
+    if (!isMountedRef.current) return;
     if (data) setContracts(data);
     setTotal(count || 0);
     setLoading(false);
@@ -183,6 +194,28 @@ export default function ExpenseContractList() {
     e.target.value = '';
   }
 
+  function buildContractSummaryRows(c: {
+    contract_code?: string | null;
+    contract_name?: string | null;
+    contract_amount?: number | null;
+    project_id?: string | null;
+    party_b_id?: string | null;
+  }) {
+    const projectName = projects.find((p) => p.id === c.project_id)?.name || '';
+    const partyBName = partyBs.find((p) => p.id === c.party_b_id)?.unit_name || '';
+    const amountText =
+      c.contract_amount != null
+        ? `¥${Number(c.contract_amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`
+        : '—';
+    return [
+      { label: '合同编号', value: c.contract_code || '—' },
+      { label: '合同名称', value: c.contract_name || '—' },
+      { label: '合同金额', value: amountText },
+      { label: '所属项目', value: projectName || '—' },
+      { label: '乙方单位', value: partyBName || '—' },
+    ];
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.contract_name || !form.project_id) {showToast('error', '请填写必填项');return;}
@@ -210,13 +243,14 @@ export default function ExpenseContractList() {
       setSaving(false);
       if (error) {showToast('error', error.message);return;}
 
-      const user = getStoredUser();
-      try {
-        await createApproval('expense_contract', data.id, data.contract_name, user.id!);
-        showToast('success', '创建成功，已提交审批');
-      } catch (approvalError) {
-        showToast('success', '创建成功');
-      }
+      const approvalSubmitted = await tryCreateApproval('expense_contract', data.id, data.contract_name, {
+        projectId: data.project_id,
+        summaryRows: buildContractSummaryRows(data),
+      });
+      showToast(
+        'success',
+        approvalSubmitted ? '创建成功，已提交审批' : '创建成功（未提交审批或已取消）',
+      );
     }
 
     setShowModal(false);
@@ -269,7 +303,7 @@ export default function ExpenseContractList() {
   const modalSubmitText = (() => {
     if (saving) return '保存中...';
     if (editingId) return '保存';
-    return '新增';
+    return '保存并提交审批';
   })();
 
   return (
@@ -331,6 +365,19 @@ export default function ExpenseContractList() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-center gap-1">
+                          <SubmitApprovalListAction
+                            sourceType="expense_contract"
+                            sourceId={item.id}
+                            sourceName={item.contract_name}
+                            projectId={item.project_id}
+                            summaryRows={buildContractSummaryRows(item)}
+                            onDone={(ok) =>
+                              showToast(
+                                'success',
+                                ok ? '已提交审批' : '未提交审批（已取消或未配置流程）',
+                              )
+                            }
+                          />
                           <button onClick={() => openEdit(item)} className="p-2 text-yellow-400 hover:bg-yellow-500/20 rounded-lg" title="编辑">
                             <FaEdit className="w-4 h-4" />
                           </button>
@@ -405,15 +452,18 @@ export default function ExpenseContractList() {
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium text-gray-800">附件管理</h4>
                     <div className="flex gap-2">
+                      <input
+                        type="file"
+                        ref={localFileInputRef}
+                        multiple
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                        onChange={handleLocalFileSelect}
+                        className="hidden"
+                        aria-label="选择本地文件上传"
+                      />
                       <button 
                         type="button"
-                        onClick={() => {
-                          const fileInput = document.createElement('input');
-                          fileInput.type = 'file';
-                          fileInput.multiple = true;
-                          fileInput.onchange = handleLocalFileSelect;
-                          fileInput.click();
-                        }}
+                        onClick={() => localFileInputRef.current?.click()}
                         className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center gap-1"
                       >
                         <FaUpload className="w-3.5 h-3.5" />
@@ -483,7 +533,7 @@ export default function ExpenseContractList() {
                     </div>
                     
                     {loadingGeneratedContracts ? (
-                      <div className="py-8 text-center text-gray-500">加载中...</div>
+                      <Skeleton variant="card" />
                     ) : generatedContracts.length === 0 ? (
                       <div className="py-8 text-center text-gray-500">暂无已生成的合同</div>
                     ) : (

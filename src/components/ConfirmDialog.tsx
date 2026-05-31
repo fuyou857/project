@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -41,11 +42,26 @@ export function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   const styles = typeStyles[type];
+  const containerRef = useFocusTrap(isOpen, onClose);
+  const confirmRef = React.useRef<HTMLButtonElement>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      confirmRef.current?.focus();
+    }
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          ref={containerRef}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="confirm-dialog-title"
+          aria-describedby="confirm-dialog-message"
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -65,8 +81,8 @@ export function ConfirmDialog({
                 <FaExclamationTriangle className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-                <p className="text-slate-300 mb-6">{message}</p>
+                <h3 id="confirm-dialog-title" className="text-xl font-bold text-white mb-2">{title}</h3>
+                <p id="confirm-dialog-message" className="text-slate-300 mb-6">{message}</p>
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={onClose}
@@ -76,9 +92,11 @@ export function ConfirmDialog({
                     {cancelText}
                   </button>
                   <button
+                    ref={confirmRef}
                     onClick={onConfirm}
                     disabled={loading}
                     className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 ${styles.button}`}
+                    aria-busy={loading}
                   >
                     {loading ? '处理中...' : confirmText}
                   </button>

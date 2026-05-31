@@ -1,0 +1,14 @@
+[Unit]
+Description=Ciond WeChat Work API proxy (fixed egress IP for qyapi.weixin.qq.com)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/www/wwwroot/ciond
+EnvironmentFile=-/www/wwwroot/ciond/.env.wechat-proxy
+ExecStart=/usr/bin/node /www/wwwroot/ciond/scripts/wechat-work-proxy-server.mjs
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

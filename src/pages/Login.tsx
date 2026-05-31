@@ -5,57 +5,50 @@ import { FaBuilding, FaLock, FaUser } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import { addLog, logModule, logAction } from '../services/logService';
 import WechatWorkLogin from '../components/WechatWorkLogin';
+import { clearOAuthCallbackFromUrl } from '../services/wechatWorkService';
 
 export default function Login() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
+  const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const DEFAULT_DOMAIN = 'ciond.com';
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      setError('请输入用户名和密码');
+    if (!account.trim() || !password.trim()) {
+      setError('请输入用户名或手机号和密码');
       return;
     }
     setLoading(true);
     setError('');
 
-    let loginEmail = email.trim();
-    if (!loginEmail.includes('@')) {
-      loginEmail = `${loginEmail}@${DEFAULT_DOMAIN}`;
-    }
+    const loginAccount = account.trim();
+    clearOAuthCallbackFromUrl();
 
     try {
-      const { error: authError } = await signIn(loginEmail, password);
-      
+      const { error: authError } = await signIn(loginAccount, password);
+
       if (authError) {
-        console.error('登录错误:', authError);
-        let errorMsg = '用户名或密码错误';
-        if (authError.message?.includes('email not confirmed')) {
-          errorMsg = '邮箱未验证，请先验证邮箱';
-        } else if (authError.message?.includes('invalid credentials')) {
-          errorMsg = '邮箱或密码不正确';
+        let errorMsg = '用户名或手机号不存在，或密码错误';
+        if (authError.message?.includes('禁用')) {
+          errorMsg = authError.message;
         } else if (authError.message) {
           errorMsg = authError.message;
         }
         setError(errorMsg);
-        addLog(logModule.SYSTEM, logAction.LOGIN, `登录失败: ${loginEmail}`, { email: loginEmail }, 'failed');
+        addLog(logModule.SYSTEM, logAction.LOGIN, `登录失败: ${loginAccount}`, { account: loginAccount }, 'failed');
         setLoading(false);
         return;
       }
 
-      addLog(logModule.SYSTEM, logAction.LOGIN, `登录成功: ${loginEmail}`, { email: loginEmail });
+      addLog(logModule.SYSTEM, logAction.LOGIN, `登录成功: ${loginAccount}`, { account: loginAccount });
       navigate('/dashboard');
-
     } catch (err: unknown) {
       console.error('登录异常:', err);
       setError('登录失败，请稍后重试');
-      addLog(logModule.SYSTEM, logAction.LOGIN, `登录异常: ${loginEmail}`, { email: loginEmail }, 'failed');
+      addLog(logModule.SYSTEM, logAction.LOGIN, `登录异常: ${loginAccount}`, { account: loginAccount }, 'failed');
     } finally {
       setLoading(false);
     }
@@ -63,8 +56,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
@@ -79,19 +72,17 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-slate-400 text-sm mb-2">用户名 / 邮箱</label>
+              <label className="block text-slate-400 text-sm mb-2">用户名 / 手机号</label>
               <div className="relative">
                 <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
-                  placeholder="请输入用户名或邮箱"
+                  placeholder="请输入用户名或手机号"
+                  autoComplete="username"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-                  {!email.includes('@') && email.trim() && `@${DEFAULT_DOMAIN}`}
-                </span>
               </div>
             </div>
 
@@ -105,14 +96,13 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                   placeholder="请输入密码"
+                  autoComplete="current-password"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="text-red-400 text-sm text-center bg-red-500/10 py-2 rounded-lg">
-                {error}
-              </div>
+              <div className="text-red-400 text-sm text-center bg-red-500/10 py-2 rounded-lg">{error}</div>
             )}
 
             <button
@@ -126,7 +116,7 @@ export default function Login() {
               {loading ? '登录中...' : '登录'}
             </button>
           </form>
-          
+
           <WechatWorkLogin />
         </div>
       </motion.div>

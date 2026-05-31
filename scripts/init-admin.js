@@ -65,7 +65,9 @@ async function initAdmin() {
 
     let superAdminRoleId = 'super_admin';
     if (roles && roles.length > 0) {
-      const superAdminRole = roles.find(r => r.key === 'super_admin' || r.name === '超级管理员');
+      const superAdminRole = roles.find(
+        (r) => r.code === 'super_admin' || r.key === 'super_admin' || r.name === '超级管理员',
+      );
       if (superAdminRole) {
         superAdminRoleId = superAdminRole.id;
       }

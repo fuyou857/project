@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaSave, FaDownload, FaFileWord, FaFilePdf, FaMagic, FaEye } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaDownload, FaFileWord, FaFilePdf, FaMagic, FaEye, FaSync } from 'react-icons/fa';
 import { useAuth } from '../../hooks/useAuth';
 import { getTemplateById, getTemplateFileVersionUrl } from '../../services/contractTemplateLibraryService';
 import { createGeneratedContract, runDocxFillAfterGeneratedContract } from '../../services/contractGenerationService';
-import OnlyOfficeEditor from '../../components/contract/OnlyOfficeEditor';
+import OnlyOfficeEditorLazy from '../../components/contract/OnlyOfficeEditorLazy';
 import { saveAs } from 'file-saver';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 function ContractTemplateEditorPage() {
   const navigate = useNavigate();
@@ -20,6 +21,10 @@ function ContractTemplateEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContractId, setGeneratedContractId] = useState<string | null>(null);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const [showSaveHint, setShowSaveHint] = useState(false);
+  const [showGenerateResult, setShowGenerateResult] = useState<string | null>(null);
+  const [showPdfComing, setShowPdfComing] = useState(false);
   
   // 加载模板数据
   useEffect(() => {
@@ -54,20 +59,7 @@ function ContractTemplateEditorPage() {
   // 保存：ONLYOFFICE 会通过「文件 → 保存」或自动保存触发服务端回调写回 Storage；此处仅作界面提示。
   const handleSaveTemplate = useCallback(async () => {
     if (!templateId || !template) return;
-
-    setIsSaving(true);
-    try {
-      alert(
-        '在线编辑的保存由 ONLYOFFICE 完成：请使用编辑器内「文件 → 保存」或等待自动保存。\n' +
-          '保存成功后，系统会通过回调把 Word 写回当前模板版本对应的 Storage 路径。\n' +
-          '若无法保存，请在 Supabase 部署 `onlyoffice-callback` Edge Function，并将 ONLYOFFICE_CALLBACK_URL 设为该函数的 HTTPS 地址（见 .env.example）。',
-      );
-    } catch (err) {
-      alert('保存模板失败');
-      console.error('保存模板失败:', err);
-    } finally {
-      setIsSaving(false);
-    }
+    setShowSaveHint(true);
   }, [templateId, template]);
   
   // 下载Word文档
@@ -79,7 +71,7 @@ function ContractTemplateEditorPage() {
       const blob = await response.blob();
       saveAs(blob, `${template?.name || 'contract-template'}.docx`);
     } catch (err) {
-      alert('下载Word文档失败');
+      setShowGenerateResult('下载 Word 文档失败，请检查网络后重试');
       console.error('下载Word文档失败:', err);
     }
   }, [documentUrl, template]);
@@ -87,15 +79,7 @@ function ContractTemplateEditorPage() {
   // 下载PDF文档
   const handleDownloadPdf = useCallback(async () => {
     if (!documentUrl || !templateId) return;
-    
-    try {
-      // 这里需要实现PDF转换逻辑
-      // 通常是调用后端API将Word转换为PDF
-      alert('PDF转换功能正在开发中');
-    } catch (err) {
-      alert('下载PDF文档失败');
-      console.error('下载PDF文档失败:', err);
-    }
+    setShowPdfComing(true);
   }, [documentUrl, templateId]);
   
   // 生成合同
@@ -106,29 +90,31 @@ function ContractTemplateEditorPage() {
     try {
       // 创建合同记录
       const generatedContract = await createGeneratedContract({
-        template_id: templateId,
-        template_version: template.versions[0].version,
-        title: `${template.name} - 生成合同`,
-        status: 'draft',
-        variables_values: {}, // 空变量，用户可以在编辑后填充
-        userId: userId
+        templateId: templateId,
+        templateFileVersionId: template.versions[0].id,
+        projectId: null,
+        partyAId: null,
+        partyBId: null,
+        paymentMethodText: null,
+        variablesValues: {},
+        userId: userId ?? null
       });
       
       // 填充合同模板
       await runDocxFillAfterGeneratedContract({
         generatedId: generatedContract.id,
-        templateFileVersionId: template.versions[0].id,
-        variablesValues: {}, // 空变量
-        userId: userId
+        variables: {},
+        userId: userId ?? null
       });
       
       setGeneratedContractId(generatedContract.id);
-      alert('合同生成成功！');
+      const msg: string = `合同「${String(template?.name ?? '')}」生成成功！即将跳转到合同编辑页。`;
+      setShowGenerateResult(msg);
       
       // 导航到合同详情页或预览
-      navigate(`/contract/generated/${generatedContract.id}`);
+      setTimeout(() => navigate(`/contract/generated/${generatedContract.id}`), 1500);
     } catch (err) {
-      alert('生成合同失败');
+      setShowGenerateResult(`生成合同失败：${err instanceof Error ? err.message : '未知错误'}`);
       console.error('生成合同失败:', err);
     } finally {
       setIsGenerating(false);
@@ -145,6 +131,19 @@ function ContractTemplateEditorPage() {
     // 导航到合同预览页
     navigate(`/contract/generated/${generatedContractId}/preview`);
   }, [generatedContractId, handleGenerateContract, navigate]);
+
+  // 刷新文档签名 URL
+  const handleRefreshDocument = useCallback(async () => {
+    if (!template?.versions?.[0]?.id) return;
+    try {
+      const url = await getTemplateFileVersionUrl(template.versions[0].id);
+      setDocumentUrl(url);
+      setRefreshNonce((n) => n + 1);
+    } catch (err) {
+      setShowGenerateResult('刷新文档链接失败，请稍后重试');
+      console.error('刷新文档链接失败:', err);
+    }
+  }, [template]);
   
   if (isLoading) {
     return (
@@ -215,15 +214,24 @@ function ContractTemplateEditorPage() {
             <FaEye className="mr-2" />
             预览合同
           </button>
+          <button 
+            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={() => void handleRefreshDocument()}
+            title="重新获取文档访问链接（签名 URL 过期后可点此刷新）"
+          >
+            <FaSync className="mr-2" />
+            刷新链接
+          </button>
         </div>
       </div>
       
       <div className="bg-white rounded-lg shadow-lg p-4">
         {documentUrl && (
-          <OnlyOfficeEditor
+          <OnlyOfficeEditorLazy
+            key={`template-${templateId}-${refreshNonce}`}
             documentUrl={documentUrl}
             documentTitle={template?.name || '合同模板'}
-            documentKey={template?.versions?.[0]?.id}
+            documentKey={`${template?.versions?.[0]?.id}-${refreshNonce}`}
             onlyOfficeCallbackQuery={
               template?.versions?.[0]?.id
                 ? `template_file_version_id=${template.versions[0].id}`
@@ -234,6 +242,36 @@ function ContractTemplateEditorPage() {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={showSaveHint}
+        onClose={() => setShowSaveHint(false)}
+        onConfirm={() => setShowSaveHint(false)}
+        title="保存说明"
+        message="在线编辑的保存由 ONLYOFFICE 完成：请使用编辑器内「文件 → 保存」或等待自动保存。保存成功后，系统会通过回调把 Word 写回当前模板版本对应的 Storage 路径。若无法保存，请在 Supabase 部署 onlyoffice-callback Edge Function，并将 ONLYOFFICE_CALLBACK_URL 设为该函数的 HTTPS 地址（见 .env.example）。"
+        confirmText="知道了"
+        type="info"
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(showGenerateResult)}
+        onClose={() => setShowGenerateResult(null)}
+        onConfirm={() => setShowGenerateResult(null)}
+        title={showGenerateResult?.startsWith('合同') && showGenerateResult?.includes('成功') ? '操作成功' : '提示'}
+        message={showGenerateResult || ''}
+        confirmText="关闭"
+        type={showGenerateResult?.includes('失败') ? 'warning' : 'info'}
+      />
+
+      <ConfirmDialog
+        isOpen={showPdfComing}
+        onClose={() => setShowPdfComing(false)}
+        onConfirm={() => setShowPdfComing(false)}
+        title="功能开发中"
+        message="PDF 转换功能正在开发中，敬请期待。"
+        confirmText="知道了"
+        type="info"
+      />
     </div>
   );
 }

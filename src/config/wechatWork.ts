@@ -8,7 +8,7 @@ export interface WechatWorkConfig {
 export const WECHAT_WORK_CONFIG: WechatWorkConfig = {
   corpId: process.env.WECHAT_WORK_CORP_ID || 'wwea223b1a3cc25eeb',
   agentId: process.env.WECHAT_WORK_AGENT_ID || '1000026',
-  redirectUri: process.env.WECHAT_WORK_REDIRECT_URI || 'https://www.ciond.com/api/auth/wechat-work/callback',
+  redirectUri: process.env.WECHAT_WORK_REDIRECT_URI || 'https://www.ciond.com/login',
   authScope: 'snsapi_base',
 };
 
@@ -20,14 +20,15 @@ export const WECHAT_WORK_API = {
   sendMessageUrl: 'https://qyapi.weixin.qq.com/cgi-bin/message/send',
 };
 
-export function buildAuthUrl(config: WechatWorkConfig): string {
+export function buildAuthUrl(options?: { state?: string }): string {
+  const config = WECHAT_WORK_CONFIG;
   const params = new URLSearchParams({
     appid: config.corpId,
     agentid: config.agentId,
     redirect_uri: config.redirectUri,
     response_type: 'code',
     scope: config.authScope,
-    state: 'STATE',
+    state: options?.state || 'login',
   });
   return `${WECHAT_WORK_API.qrcodeUrl}?${params.toString()}`;
 }

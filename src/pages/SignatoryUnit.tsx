@@ -4,6 +4,7 @@ import { FaPlus, FaEdit, FaTrash, FaSearch, FaTimes } from 'react-icons/fa';
 import { supabase } from '../supabase/client';
 import { alertMissingRequiredFields } from '../utils/contractSubPage';
 import { SegmentedControl } from '../components/ui';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
 interface SignatoryUnit {
   id: string;
@@ -51,16 +52,17 @@ export default function SignatoryUnit() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [originalForm, setOriginalForm] = useState(initialForm);
 
   const fetchUnits = useCallback(async () => {
     const offset = (page - 1) * pageSize;
     let query = supabase.from('signatory_units').select('*', { count: 'exact' });
-    if (search) query = query.ilike('unit_name', `%${search}%`);
+    if (debouncedSearch) query = query.ilike('unit_name', `%${debouncedSearch}%`);
     const { data, count } = await query.order('created_at', { ascending: false }).range(offset, offset + pageSize - 1);
     if (data) setUnits(data);
     setTotal(count || 0);
-  }, [page, pageSize, search]);
+  }, [page, pageSize, debouncedSearch]);
 
   useEffect(() => {
     fetchUnits();

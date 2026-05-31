@@ -304,12 +304,12 @@ export default function PaymentManagement() {
     if (!form.amount || Number(form.amount) <= 0) missing.push('付款金额');
     if (!form.transfer_date?.trim()) missing.push('支付时间');
     if (missing.length > 0) {
-      showToast({ type: 'error', message: '请填写：' + missing.join('、') });
+      showToast('error', '请填写：' + missing.join('、'));
       return;
     }
 
     if (form.invoice_status === '已开票' && Number(form.amount) > Number(form.invoice_amount)) {
-      showToast({ type: 'error', message: '付款金额不能大于发票金额' });
+      showToast('error', '付款金额不能大于发票金额');
       return;
     }
 
@@ -336,7 +336,7 @@ export default function PaymentManagement() {
       const { data: newPayment, error } = await supabase.from('payment_records').insert(paymentData).select().maybeSingle();
 
       if (error || !newPayment) {
-        showToast({ type: 'error', message: '付款失败：' + (error?.message || '未知错误') });
+        showToast('error', '付款失败：' + (error?.message || '未知错误'));
         setSubmitting(false);
         return;
       }
@@ -366,12 +366,12 @@ export default function PaymentManagement() {
 
       await addLog(logModule.INVOICE, logAction.CREATE, `新增工程款支付：${getSupplierName(form.supplier_id)}，金额：${formatMoney(Number(form.amount))}，开票状态：${form.invoice_status}`, { project_id: form.project_id, supplier_id: form.supplier_id, amount: form.amount, invoice_status: form.invoice_status });
 
-      showToast({ type: 'success', message: '付款成功' });
+      showToast('success', '付款成功');
       setShowModal(false);
       setForm(initialForm);
       fetchData();
     } catch (err: any) {
-      showToast({ type: 'error', message: '付款失败：' + (err.message || '未知错误') });
+      showToast('error', '付款失败：' + (err.message || '未知错误'));
       addLog(logModule.INVOICE, logAction.CREATE, `新增工程款支付失败：${err.message}`, { project_id: form.project_id }, 'failed');
     }
 
@@ -382,12 +382,12 @@ export default function PaymentManagement() {
     const payment = payments.find((p) => p.id === id);
     const { error } = await supabase.from('payment_records').delete().eq('id', id);
     if (error) {
-      showToast({ type: 'error', message: '删除失败：' + error.message });
+      showToast('error', '删除失败：' + error.message);
     } else {
       if (payment?.invoice_status === '未开票先付款') {
         await supabase.from('payment_missing_invoice_stats').delete().eq('payment_record_id', id);
       }
-      showToast({ type: 'success', message: '删除成功' });
+      showToast('success', '删除成功');
       fetchData();
     }
     setDeleteConfirm({ show: false });

@@ -19,15 +19,13 @@
  * 自建服务：`docker compose up -d contract-convert`（见仓库 `contract-convert-service/`）。
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { getCorsHeaders } from '../_shared/cors.ts';
 import {
   resolveDocConvertConfig,
   resolveInvokeUrlFromConfig } from
 '../_shared/resolveIntegrationConfig.ts';
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-};
+let _reqOrigin: string | null = null;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

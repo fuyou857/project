@@ -12,8 +12,10 @@ import {
 '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
 import { useSingleToast } from '../../hooks/useSingleToast';
+import { errorMessageFromUnknown } from '../../utils/httpErrorMessage';
 import SingleToastBanner from '../../components/ui/SingleToastBanner';
 import ResponsiveTable from '../../components/ResponsiveTable';
+import WechatWorkBindPanel from '../../components/admin/WechatWorkBindPanel';
 import { SearchableSelect, SegmentedControl } from '../../components/ui';
 
 const PAGE_SIZE = 15;
@@ -69,9 +71,9 @@ export default function UserManagement() {
       setCompanies(companiesRes);
       setRoles(rolesRes);
       setProjects(projectsRes);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('获取用户数据失败:', error);
-      showToast('error', error.message || '获取用户数据失败');
+      showToast('error', errorMessageFromUnknown(error, '获取用户数据失败'));
     }
     setLoading(false);
   }
@@ -141,18 +143,13 @@ export default function UserManagement() {
           return;
         }
 
-        if (!formData.email) {
-          showToast('error', '请填写邮箱');
-          return;
-        }
-
         if (!formData.role_id) {
           showToast('error', '请选择角色');
           return;
         }
 
         await createUser({
-          email: formData.email,
+          email: formData.email || undefined,
           password: formData.password,
           username: formData.username,
           real_name: formData.real_name,
@@ -180,8 +177,9 @@ export default function UserManagement() {
       });
       setEditingId(null);
       fetchData();
-    } catch (err: any) {
-      showToast('error', err.message || '操作失败');
+    } catch (err: unknown) {
+      console.error('新增用户失败:', err);
+      showToast('error', errorMessageFromUnknown(err, '操作失败'));
     } finally {
       setSubmitting(false);
     }
@@ -212,8 +210,8 @@ export default function UserManagement() {
       setDeletingUser(null);
       setRelatedDataWarning([]);
       fetchData();
-    } catch (err: any) {
-      showToast('error', err.message || '删除失败');
+    } catch (err: unknown) {
+      showToast('error', errorMessageFromUnknown(err, '删除失败'));
     }
   }
 
@@ -232,8 +230,8 @@ export default function UserManagement() {
       await updateUser(user.id, { status: user.status === 'active' ? 'disabled' : 'active' });
       showToast('success', user.status === 'active' ? '已禁用' : '已启用');
       fetchData();
-    } catch (err: any) {
-      showToast('error', err.message || '操作失败');
+    } catch (err: unknown) {
+      showToast('error', errorMessageFromUnknown(err, '操作失败'));
     }
   }
 
@@ -259,8 +257,8 @@ export default function UserManagement() {
       setShowPasswordModal(false);
       setPasswordUserId(null);
       setPasswordForm({ newPassword: '', confirmPassword: '' });
-    } catch (err: any) {
-      showToast('error', err.message || '密码重置失败');
+    } catch (err: unknown) {
+      showToast('error', errorMessageFromUnknown(err, '密码重置失败'));
     }
   }
 
@@ -387,6 +385,12 @@ export default function UserManagement() {
                   { key: 'username', label: '用户名', hiddenOnMobile: true },
                   { key: 'phone', label: '手机号', hiddenOnMobile: true },
                   { key: 'email', label: '邮箱', render: (val) => val ? <span className="text-blue-600">{String(val)}</span> : <span className="text-gray-400">未绑定</span> },
+                  { key: 'wechat_work_userid', label: '企业微信', hiddenOnMobile: true, render: (_val, row) => {
+                    const u = row as User;
+                    return u.wechat_work_userid
+                      ? <span className="text-green-700 text-xs">{u.wechat_work_name || u.wechat_work_userid}</span>
+                      : <span className="text-gray-400 text-xs">未绑定</span>;
+                  }},
                   { key: 'role_ids', label: '角色', render: (val) => getRoleNames(val), hiddenOnMobile: true },
                   { key: 'company_id', label: '所属公司', render: (val) => getCompanyName(val), hiddenOnMobile: true },
                   { key: 'project_ids', label: '项目权限', render: (val) => `${Array.isArray(val) ? val.length : 0} 个项目`, hiddenOnMobile: true },
@@ -481,7 +485,7 @@ export default function UserManagement() {
                   
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">姓名</label>
+                    <label className="block text-sm text-gray-600 mb-2">姓名 <span className="text-gray-400 text-xs">（企微扫码可匹配）</span></label>
                     <input
                     type="text"
                     value={formData.real_name}
@@ -493,7 +497,7 @@ export default function UserManagement() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">手机号</label>
+                    <label className="block text-sm text-gray-600 mb-2">手机号 <span className="text-gray-400 text-xs">（登录/企微匹配）</span></label>
                     <input
                     type="tel"
                     value={formData.phone}
@@ -502,16 +506,28 @@ export default function UserManagement() {
                   
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">邮箱 <span className="text-red-500">*</span></label>
+                    <label className="block text-sm text-gray-600 mb-2">内部邮箱 <span className="text-gray-400 text-xs">（可选，不用于登录）</span></label>
                     <input
                     type="email"
-                    required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800" />
                   
                   </div>
                 </div>
+
+                {editingId && (() => {
+                  const editUser = users.find((u) => u.id === editingId);
+                  if (!editUser) return null;
+                  return (
+                    <WechatWorkBindPanel
+                      user={editUser}
+                      canManage={canModifyRoles()}
+                      showToast={showToast}
+                      onUpdated={() => void fetchData()}
+                    />
+                  );
+                })()}
 
                 <div>
                   <label className="block text-sm text-gray-600 mb-2">

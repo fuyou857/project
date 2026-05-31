@@ -6,12 +6,23 @@
 2. `migrations/20260520180000_approval_phase3.sql`
 3. `migrations/20260521140000_approval_phase4.sql`
 4. `migrations/20260521150000_approval_phase5_sign_conditions.sql`
+5. `migrations/20260521160000_approval_phase6_email_admin.sql`（可选：邮件队列表）
+6. `migrations/20260522100000_approval_instance_approvers.sql`（**发起审批弹窗、自定义审批人**）
+
+## 第二阶段补充：发起审批弹窗
+
+- 新建业务记录后通过 `tryCreateApproval()` 弹出「发起审批」对话框（全局挂载于 `Layout`）。
+- 服务：`approvalApproverService.ts`（默认审批人、按角色候选人、`resolveProjectIdForApprovalSource`）。
+- 提交：`createApprovalWithApprovers()` 写入 `approval_instance_approvers` 与 `approvals.submit_remark`。
+- 流转：`resolveApproverUserIds(step, approvalId)` 优先读实例审批人；发起人与某步审批人相同时自动跳过。
+- 项目经理默认：匹配项目 `project_manager` 姓名；商务/会计等取对应 `roles.code` 用户池首人。
+- 已接入：收入/支出主合同新建；变更/结算/扣款等子页经 `tryCreateApproval` 同样走弹窗。
 
 ## 已完成能力摘要
 
 | 阶段 | 能力 |
 |------|------|
-| 一～二 | 12 类流程、待办/发起、撤回、通知、业务回写 |
+| 一～二 | 12 类流程、待办/发起、撤回、通知、业务回写、**发起审批弹窗与审批人调整** |
 | 三 | 催办、批量审批、意见模板、@、代理、看板、导出 |
 | 四 | 抄送、SLA 预警、重新提交、看板时效 |
 | 五 | **会签/或签**、**金额条件分支** |

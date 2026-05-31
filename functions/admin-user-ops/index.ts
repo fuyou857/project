@@ -6,24 +6,25 @@
  * 密钥：使用项目默认的 SUPABASE_* 环境变量（含 ANON + SERVICE_ROLE）。
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { getCorsHeaders } from '../_shared/cors.ts';
+import { buildInternalAuthEmail } from '../_shared/userAuthLookup.ts';
 
-const corsBase = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+let _reqOrigin: string | null = null;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsBase },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(_reqOrigin) },
   });
 }
 
 Deno.serve(async (req) => {
+  _reqOrigin = req.headers.get('origin');
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
       headers: {
-        ...corsBase,
+        ...getCorsHeaders(_reqOrigin),
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
       },
     });
@@ -84,11 +85,15 @@ Deno.serve(async (req) => {
   try {
     switch (action) {
       case 'createUser': {
-        const email = String(body.email ?? '');
         const password = String(body.password ?? '');
-        const username = String(body.username ?? '');
-        if (!email || !password || !username) {
-          return json({ error: '缺少 email、password 或 username' }, 400);
+        const username = String(body.username ?? '').trim();
+        const phone = body.phone != null ? String(body.phone).trim() : '';
+        let email = String(body.email ?? '').trim();
+        if (!password || !username) {
+          return json({ error: '缺少 password 或 username' }, 400);
+        }
+        if (!email) {
+          email = buildInternalAuthEmail(username, phone || null);
         }
 
         const { data: authUser, error: ce } = await admin.auth.admin.createUser({
@@ -157,6 +162,7 @@ Deno.serve(async (req) => {
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return json({ error: msg }, 400);
+    // 返回 200 + error，避免前端 invoke 只显示「non-2xx」
+    return json({ ok: false, error: msg });
   }
 });

@@ -35,4 +35,5 @@ export const APPROVAL_SOURCE_TYPE_LABELS: Record<string, string> = {
   expense_settlement: '支出合同结算',
   expense_performance: '支出合同履约',
   contract_template_generated: '生成合同用印',
+  machine_shift: '机械台班',
 };

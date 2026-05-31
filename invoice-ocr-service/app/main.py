@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # 日志配置
 logging.basicConfig(
@@ -48,6 +49,18 @@ except ImportError as e:
     fitz = None
 
 app = FastAPI(title="Invoice OCR Service", version="3.0.0")
+
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+app.debug = DEBUG
+
+# 全局异常处理器
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"code": 500, "message": str(exc) if DEBUG else "服务器内部错误，请稍后重试"}
+    )
 
 # CORS配置
 app.add_middleware(

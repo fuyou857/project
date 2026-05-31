@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaSearch, FaUpload, FaFile, FaImage, FaTrashAlt, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import { supabase } from '../supabase/client';
 import { SearchableSelect, SegmentedControl } from '../components/ui';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
 interface PartyB {
   id: string;
@@ -47,6 +48,7 @@ export default function PartyB() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [filterCategory, setFilterCategory] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -76,12 +78,12 @@ export default function PartyB() {
   const fetchData = useCallback(async () => {
     const offset = (page - 1) * pageSize;
     let query = supabase.from('party_b').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + pageSize - 1);
-    if (search) query = query.ilike('unit_name', `%${search}%`);
+    if (debouncedSearch) query = query.ilike('unit_name', `%${debouncedSearch}%`);
     if (filterCategory) query = query.eq('unit_type', filterCategory);
     const { data: res, count } = await query;
     if (res) setData(res);
     setTotal(count || 0);
-  }, [page, pageSize, search, filterCategory]);
+  }, [page, pageSize, debouncedSearch, filterCategory]);
 
   useEffect(() => {
     fetchData();

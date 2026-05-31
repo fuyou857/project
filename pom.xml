@@ -18,7 +18,7 @@
     <description>合同模板管理系统 - 合同模板库</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>21</java.version>
         <poi.version>5.2.5</poi.version>
         <itext.version>7.2.5</itext.version>
     </properties>
