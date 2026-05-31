@@ -47,6 +47,10 @@ dist.bak/
 releases/
 logs/
 
+# 构建产物（压缩文件）
+*.br
+*.gz
+
 # Python
 __pycache__/
 *.py[cod]

@@ -47,5 +47,5 @@ export function filterStepsByAmountRules(
     }
   }
   if (maxStep == null) return steps;
-  return steps.filter((s) => s.step_order <= maxStep);
+  return steps.filter((s) => s.step_order <= maxStep!);
 }
