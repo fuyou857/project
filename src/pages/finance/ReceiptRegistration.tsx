@@ -700,7 +700,7 @@ export default function ReceiptRegistration() {
                   aria-label="单位类别" />
               </div>
               </div>
-              <div className="flex justify-end gap-3 mt-4"><button onClick={() => setShowAddPartyA(false)} className="px-4 py-2 bg-gray-500 text-gray-800 rounded-lg">取消</button><button onClick={handleAddPartyA} className="px-4 py-2 bg-blue-600 text-gray-800 rounded-lg">保存</button></div>
+              <div className="flex justify-end gap-3 mt-4"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAddPartyA(false); }} className="px-4 py-2 bg-gray-500 text-gray-800 rounded-lg">取消</button><button onClick={handleAddPartyA} className="px-4 py-2 bg-blue-600 text-gray-800 rounded-lg">保存</button></div>
             </motion.div>
           </motion.div>
         }

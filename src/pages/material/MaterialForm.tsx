@@ -238,7 +238,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({
           <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               取消

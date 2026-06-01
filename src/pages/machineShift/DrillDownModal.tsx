@@ -93,7 +93,7 @@ export default function DrillDownModal({ title, projectId, machineId, month, onC
             {title || '明细数据'}
           </h3>
           <button
-            onClick={onClose}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <FaTimes className="w-5 h-5 text-gray-500" />

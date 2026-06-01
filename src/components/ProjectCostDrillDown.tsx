@@ -127,7 +127,7 @@ export function ProjectCostDrillDown({ projectId, projectName }: ProjectCostDril
     : currentDetails.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={handleClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={(e) => { e.stopPropagation(); handleClose(); }}>
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}

@@ -441,7 +441,7 @@ export default function SignatoryList() {
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={handleClose}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }}
                   className="px-4 py-2 bg-gray-500 text-gray-800 rounded-lg"
                 >
                   取消

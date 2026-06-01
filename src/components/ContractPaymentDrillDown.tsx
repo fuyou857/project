@@ -81,7 +81,7 @@ export function ContractPaymentDrillDown({ contractId, type, contractName }: Con
       />
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={handleClose}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={(e) => { e.stopPropagation(); handleClose(); }}>
           <div
             className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
             onClick={e => e.stopPropagation()}

@@ -317,7 +317,7 @@ export default function PartyBList() {
               <h3 className="text-xl font-bold text-gray-800">
                 {editingId ? '编辑乙方单位' : '新增乙方单位'}
               </h3>
-              <button onClick={handleClose} className="text-gray-500 hover:text-gray-800">
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }} className="text-gray-500 hover:text-gray-800">
                 <FaTimes />
               </button>
             </div>
@@ -420,7 +420,7 @@ export default function PartyBList() {
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={handleClose}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
                 >
                   取消

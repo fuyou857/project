@@ -209,7 +209,7 @@ export default function RoleManagement() {
         {showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-800">{editingRole ? '编辑角色' : '新增角色'}</h3><button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
+              <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-800">{editingRole ? '编辑角色' : '新增角色'}</h3><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowModal(false); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div><label className="block text-sm text-gray-500 mb-2">角色名称 *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
                 <div><label className="block text-sm text-gray-500 mb-2">角色标识 *</label><input type="text" required value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} disabled={!!editingRole} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800 disabled:opacity-50" /></div>
@@ -229,7 +229,7 @@ export default function RoleManagement() {
                 <div className="flex-1 min-w-0 pr-2">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-xl font-bold text-gray-800">分配权限 - {editingRole.name}</h3>
-                    <button type="button" onClick={() => setShowPermModal(false)} className="p-2 text-gray-500 hover:text-gray-800 shrink-0" aria-label="关闭">
+                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPermModal(false); }} className="p-2 text-gray-500 hover:text-gray-800 shrink-0" aria-label="关闭">
                       <FaTimes />
                     </button>
                   </div>

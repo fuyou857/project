@@ -156,7 +156,7 @@ function QuickAddPartyAModal({ show, onClose, onSuccess }: QuickAddPartyAProps) 
             
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
               取消
             </button>
             <button type="submit" disabled={saving} className="px-4 py-2 bg-blue-600 text-gray-800 rounded-lg disabled:opacity-50 hover:bg-blue-700">
@@ -667,9 +667,8 @@ export default function ProjectForm({
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-              
               取消
             </button>
             <button

@@ -222,7 +222,7 @@ export default function MachineShiftEntry({
         <h3 className="text-xl font-bold text-gray-800">录入台班</h3>
         {onClose && (
           <button
-            onClick={onClose}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose && onClose(); }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <FaTimes className="text-gray-500" />
@@ -432,7 +432,7 @@ export default function MachineShiftEntry({
           {onClose && (
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose && onClose(); }}
               className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
             >
               取消

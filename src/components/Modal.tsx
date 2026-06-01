@@ -56,7 +56,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', showClose
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50"
-            onClick={onClose}
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
             aria-hidden="true"
           />
           <motion.div
