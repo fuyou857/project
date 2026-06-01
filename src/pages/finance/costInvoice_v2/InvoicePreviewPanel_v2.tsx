@@ -26,8 +26,6 @@ export default function InvoicePreviewPanel_v2({
   progressLabel,
   disabled
 }: Props) {
-  const fallbackInputRef = useRef<HTMLInputElement>(null);
-
   const { inputRef, inputId, openPicker, onInputChange } = useSafeFileInput({
     disabled,
     accept: COST_INVOICE_ACCEPT,
@@ -55,7 +53,7 @@ export default function InvoicePreviewPanel_v2({
     } catch (err) {
       console.error('[InvoiceUpload] openPicker failed:', err);
 
-      const input = inputRef.current || fallbackInputRef.current;
+      const input = inputRef.current;
       if (input && !input.disabled) {
         try {
           input.click();
@@ -76,7 +74,7 @@ export default function InvoicePreviewPanel_v2({
       } catch (err) {
         console.error('[InvoiceUpload] openPicker (keyboard) failed:', err);
 
-        const input = inputRef.current || fallbackInputRef.current;
+        const input = inputRef.current;
         if (input && !input.disabled) {
           input.click();
         }
@@ -142,7 +140,7 @@ export default function InvoicePreviewPanel_v2({
 
         {/* Hidden file input - must be rendered in DOM for the picker to work */}
         <input
-          ref={fallbackInputRef}
+          ref={inputRef}
           id={inputId}
           type="file"
           accept={COST_INVOICE_ACCEPT}
