@@ -465,7 +465,7 @@ function Sidebar({
           >
             <div className="p-4 border-b border-gray-200">
               <button
-                onClick={onClose}
+                onClick={(e) => { e.stopPropagation(); onClose?.(); }}
                 className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg min-h-[44px] flex items-center"
               >
                 <FaTimes className="w-5 h-5" />

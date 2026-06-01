@@ -97,7 +97,7 @@ function QuickAddPartyAModal({ show, onClose, onSuccess }: QuickAddPartyAProps) 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
-      onClick={onClose}>
+      onClick={(e) => { e.stopPropagation(); onClose(); }}>
       
       <motion.div
         initial={{ scale: 0.9 }}
@@ -268,7 +268,7 @@ export default function ProjectForm({
         
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-800">{editing ? '编辑项目' : '新增项目'}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2">
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="text-gray-400 hover:text-gray-600 p-2">
             <FaTimes />
           </button>
         </div>
