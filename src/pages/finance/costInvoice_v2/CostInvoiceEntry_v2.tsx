@@ -5,28 +5,15 @@ import { FaPlus } from 'react-icons/fa';
 import { supabase } from '../../../supabase/client';
 import { useCompanyScope } from '../../../hooks/useCompanyScope';
 import { useCostInvoiceForm_v2 } from './useCostInvoiceForm_v2';
+import { useSupplierSync } from './useSupplierSync';
+import { useInvoiceSubmit } from './useInvoiceSubmit';
 import CostInvoiceEntryWorkspace_v2 from './CostInvoiceEntryWorkspace_v2';
 import UiModalOverlay from '../../../components/ui/UiModalOverlay';
 import { useModalInteractionGuard } from '../../../hooks/useModalInteractionGuard';
 import { useBodyScrollLock } from '../../../hooks/useBodyScrollLock';
 import { projectSelectOptions } from '../../../components/ui/options';
-import { 
-  sellerFieldsFromForm, 
-  syncProjectSupplier, 
-  matchPartyBInBase,
-  buildPartyBInsertFromSeller,
-  DEFAULT_PARTY_B_UNIT_TYPE,
-  mapPartyBTypeToSupplyCategory,
-  type PartyBRow
-} from '../costInvoice/sellerPartyBSync';
-import { 
-  invoicePaidAmount, 
-  costInvoicePaymentWritePayload 
-} from '../../../utils/costInvoiceAmounts';
-import { resolvePersistOcrStatus } from '../costInvoice/applyOcrToForm';
-import { addLog, logAction, logModule } from '../../../services/logService';
-import { getStoredUser } from '../../../utils/sessionUser';
-import { packExtendedRemark, initialCostInvoiceForm, type OcrUiStatus, type CostInvoiceForm } from '../costInvoice/types';
+import { type PartyBRow } from '../costInvoice/sellerPartyBSync';
+import { type CostInvoiceForm } from '../costInvoice/types';
 import CostInvoiceList from '../CostInvoiceList';
 import { deferModalOpen } from '../../../utils/deferModalOpen';
 import { resetBodyInteractionLock } from '../../../utils/bodyInteractionLock';
@@ -36,14 +23,11 @@ export default function CostInvoiceEntry_v2() {
   const navigate = useNavigate();
   const { currentCompany, companyIds } = useCompanyScope();
 
-  // State for data
   const [projects, setProjects] = useState<any[]>([]);
-  const [partyBList, setPartyBList] = useState<any[]>([]);
+  const [partyBList, setPartyBList] = useState<PartyBRow[]>([]);
   const [projectSuppliers, setProjectSuppliers] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [supplierSyncWarnings, setSupplierSyncWarnings] = useState<string[]>([]);
 
-  // V2 Hook
   const {
     form,
     setForm,
@@ -56,12 +40,23 @@ export default function CostInvoiceEntry_v2() {
     validate,
     uploadFile
   } = useCostInvoiceForm_v2({
-    onSuccess: () => {
-      setShowModal(false);
-      fetchData();
-    },
-    onOcrComplete: (completedForm, status) => handleOcrComplete(completedForm, status)
+    onSuccess: handleSuccess,
+    onOcrComplete: handleOcrComplete
   });
+
+  const { warnings, clearWarnings, syncProjectSupplierForForm } = useSupplierSync(
+    partyBList,
+    projectSuppliers,
+    setProjectSuppliers
+  );
+
+  const { handleSubmit } = useInvoiceSubmit(
+    form,
+    editingId,
+    ocr.ocrUiStatus,
+    validate,
+    handleSuccess
+  );
 
   useBodyScrollLock(showModal);
   const interactionReady = useModalInteractionGuard(showModal);
@@ -70,7 +65,6 @@ export default function CostInvoiceEntry_v2() {
     fetchData();
   }, [currentCompany]);
 
-  // Initial routing check (for edit/autoOpen)
   useEffect(() => {
     const state = location.state as { editInvoiceId?: string; autoOpen?: boolean } | null;
     if (state?.autoOpen) {
@@ -86,7 +80,7 @@ export default function CostInvoiceEntry_v2() {
     try {
       let projectQuery = supabase.from('projects').select('id, name, company_id');
       if (companyIds.length > 0) projectQuery = projectQuery.in('company_id', companyIds);
-      
+
       const [projRes, pbRes, supRes] = await Promise.all([
         projectQuery,
         supabase.from('party_b').select('*'),
@@ -109,69 +103,22 @@ export default function CostInvoiceEntry_v2() {
     }
   }
 
-  const syncProjectSupplierForForm = useCallback(async (invoiceForm: CostInvoiceForm, basePartyB?: PartyBRow) => {
-    if (!invoiceForm.project_id?.trim() || !invoiceForm.seller_name?.trim()) return;
+  function handleOcrComplete(completedForm: CostInvoiceForm) {
+    syncProjectSupplierForForm(completedForm);
+  }
 
-    const fields = sellerFieldsFromForm(invoiceForm);
-    const sync = syncProjectSupplier(
-      invoiceForm.project_id,
-      fields,
-      projectSuppliers,
-      partyBList as PartyBRow[],
-    );
-
-    if (sync.status === 'warning') {
-      setSupplierSyncWarnings((prev) => prev.includes(sync.message) ? prev : [...prev, sync.message]);
-      return;
-    }
-
-    if (sync.status === 'matched') {
-      setForm((f) => ({ ...f, supplier_id: sync.supplierId }));
-      return;
-    }
-
-    if (sync.status === 'skipped') {
-      // Auto create project supplier if not exists
-      const partyB = basePartyB || matchPartyBInBase(partyBList as PartyBRow[], fields.seller_name, fields.seller_tax_id).partyB;
-      const supplyCategory = mapPartyBTypeToSupplyCategory(partyB?.unit_type);
-      const { bank_name, bank_account } = buildPartyBInsertFromSeller(fields);
-
-      const { data, error } = await supabase.from('suppliers').insert({
-        project_id: invoiceForm.project_id,
-        name: fields.seller_name.trim(),
-        supply_category: supplyCategory,
-        bank_account: bank_account || null,
-        bank_name: bank_name || null,
-        status: 'active',
-      }).select().maybeSingle();
-
-      if (data) {
-        setProjectSuppliers(prev => [...prev, data]);
-        setForm(f => ({ ...f, supplier_id: data.id }));
-      }
-    }
-  }, [partyBList, projectSuppliers]);
-
-  const handleOcrComplete = useCallback(async (completedForm: CostInvoiceForm, status: OcrUiStatus) => {
-    if (status === 'failed' || !completedForm.seller_name?.trim()) return;
-    const fields = sellerFieldsFromForm(completedForm);
-    const match = matchPartyBInBase(partyBList as PartyBRow[], fields.seller_name, fields.seller_tax_id);
-    
-    if (match.status === 'exact' && match.partyB) {
-      if (completedForm.project_id) {
-        await syncProjectSupplierForForm(completedForm, match.partyB);
-      }
-    }
-    // Note: If no match, UI in Workspace will handle prompting to add party_b
-  }, [partyBList, syncProjectSupplierForForm]);
+  function handleSuccess() {
+    setShowModal(false);
+    fetchData();
+  }
 
   const openCreateModal = useCallback(() => {
     resetForm();
-    setSupplierSyncWarnings([]);
+    clearWarnings();
     const lastProject = localStorage.getItem('ciond_cost_invoice_last_project');
     if (lastProject) setForm((f) => ({ ...f, project_id: lastProject }));
     deferModalOpen(() => setShowModal(true));
-  }, [resetForm, setForm]);
+  }, [resetForm, clearWarnings, setForm]);
 
   const handleClose = useCallback(() => {
     try {
@@ -189,74 +136,29 @@ export default function CostInvoiceEntry_v2() {
     }
   }, [ocr, resetForm]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors = validate();
-    if (errors.length > 0) {
-      alert(`请补全必填项：${errors.join('、')}`);
-      return;
-    }
-
+  const handleSubmitWithState = useCallback(async (e: React.FormEvent) => {
     setSubmitting(true);
     try {
-      const persistOcrStatus = resolvePersistOcrStatus(ocr.ocrUiStatus, form.attachment_urls.length > 0);
-      const baseInvoiceData: any = {
-        project_id: form.project_id,
-        supplier_id: form.supplier_id,
-        invoice_type: form.invoice_type,
-        invoice_number: form.invoice_number,
-        invoice_amount: form.invoice_amount,
-        deductible_tax: form.invoice_type === '专票' ? form.deductible_tax ?? 0 : null,
-        invoice_date: form.invoice_date,
-        attachment_urls: form.attachment_urls.length > 0 ? form.attachment_urls : null,
-        invoice_code: form.invoice_code.trim() || null,
-        amount_excluding_tax: form.amount_excluding_tax ?? null,
-        tax_rate: form.tax_rate ?? null,
-        tax_amount: form.tax_amount ?? null,
-        goods_name: form.goods_name.trim() || null,
-        seller_name: form.seller_name.trim() || null,
-        seller_tax_id: form.seller_tax_id.trim() || null,
-        remark: packExtendedRemark(form) || null,
-        ocr_invoice_type_label: form.ocr_invoice_type_label.trim() || null,
-        ocr_status: form.attachment_urls.length > 0 ? persistOcrStatus : 'idle'
-      };
-
-      if (editingId) {
-        // Need original invoice to calculate paid/remaining
-        const { data: original } = await supabase.from('cost_invoices').select('*').eq('id', editingId).single();
-        const paid = invoicePaidAmount(original);
-        const payment = costInvoicePaymentWritePayload(form.invoice_amount ?? 0, paid);
-        const { error } = await supabase.from('cost_invoices').update({ ...baseInvoiceData, ...payment }).eq('id', editingId);
-        if (error) throw error;
-        
-        await addLog(logModule.INVOICE, logAction.UPDATE, `更新成本发票：${form.invoice_number}`, { id: editingId, ...baseInvoiceData });
-      } else {
-        const user = getStoredUser();
-        const payment = costInvoicePaymentWritePayload(form.invoice_amount ?? 0, 0);
-        const { error, data: inserted } = await supabase.from('cost_invoices').insert({ 
-          ...baseInvoiceData, 
-          ...payment,
-          created_by: user.id || null 
-        }).select().single();
-        if (error) throw error;
-        
-        await addLog(logModule.INVOICE, logAction.CREATE, `录入成本发票：${form.invoice_number}`, { id: inserted?.id, ...baseInvoiceData });
-      }
-
-      if (form.project_id) localStorage.setItem('ciond_cost_invoice_last_project', form.project_id);
-      alert('保存成功');
-      setShowModal(false);
-      fetchData();
-    } catch (err: any) {
-      alert('提交失败: ' + err.message);
+      await handleSubmit(e);
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [handleSubmit, setSubmitting]);
+
+  const handleProjectChange = useCallback((pid: string) => {
+    clearWarnings();
+    setForm(f => {
+      const next = { ...f, project_id: pid, supplier_id: '' };
+      syncProjectSupplierForForm(next);
+      return next;
+    });
+  }, [clearWarnings, setForm, syncProjectSupplierForForm]);
 
   const projectOptions = useMemo(() => projectSelectOptions(projects), [projects]);
   const supplierOptions = useMemo(() => {
-    const filtered = projects.find(p => p.id === form.project_id) ? projectSuppliers.filter(s => s.project_id === form.project_id) : [];
+    const filtered = projects.find(p => p.id === form.project_id)
+      ? projectSuppliers.filter(s => s.project_id === form.project_id)
+      : [];
     return [
       { value: '', label: form.project_id ? (filtered.length ? '选择乙方单位' : '该项目暂无乙方') : '请先选择项目' },
       ...filtered.map(s => ({ value: s.id, label: `${s.name} (${s.supply_category})` }))
@@ -293,19 +195,12 @@ export default function CostInvoiceEntry_v2() {
           submitting={submitting}
           projectOptions={projectOptions}
           supplierOptions={supplierOptions}
-          supplierSyncWarnings={supplierSyncWarnings}
+          supplierSyncWarnings={warnings}
           ocr={ocr}
           uploadFile={uploadFile}
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmitWithState}
           onClose={handleClose}
-          onProjectChange={(pid: string) => {
-            setSupplierSyncWarnings([]);
-            setForm(f => {
-              const next = { ...f, project_id: pid, supplier_id: '' };
-              syncProjectSupplierForForm(next);
-              return next;
-            });
-          }}
+          onProjectChange={handleProjectChange}
           interactionReady={interactionReady}
         />
       </UiModalOverlay>

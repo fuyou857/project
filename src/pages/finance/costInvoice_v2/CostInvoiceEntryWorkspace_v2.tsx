@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
-import { FaSave, FaTimes, FaSpinner, FaEraser, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSave, FaSpinner, FaEraser, FaExclamationTriangle } from 'react-icons/fa';
 import { SearchableSelect, SegmentedControl } from '../../../components/ui';
-import { 
-  type CostInvoiceForm, 
+import {
+  type CostInvoiceForm,
   INVOICE_TYPES,
   INVOICE_OCR_FIELD_LABELS,
   type InvoiceOcrFieldKey,
@@ -94,9 +94,26 @@ export default function CostInvoiceEntryWorkspace_v2({
     return base;
   };
 
+  const handleResetForm = () => {
+    if (confirm('确定清空所有识别结果和手动填写内容？')) {
+      setForm(initialCostInvoiceForm());
+      ocr.resetOcrMeta();
+      setTaxRateInput('');
+    }
+  };
+
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      onClose();
+    } catch (err) {
+      console.error('[CostInvoiceEntryWorkspace_v2] 取消按钮点击失败', err);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[95vh] bg-slate-50">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 shrink-0">
         <div>
           <h2 className="text-lg font-bold text-slate-900">
@@ -117,7 +134,6 @@ export default function CostInvoiceEntryWorkspace_v2({
       </div>
 
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* Left: Preview */}
         <div className="w-[45%] p-4 border-r border-slate-200 flex flex-col">
           <InvoicePreviewPanel_v2
             attachments={form.attachment_urls}
@@ -131,9 +147,7 @@ export default function CostInvoiceEntryWorkspace_v2({
           />
         </div>
 
-        {/* Right: Form */}
         <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
-          {/* Status Banner */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-center">
               <div className="text-2xl font-bold text-emerald-600">{stats.success}</div>
@@ -144,7 +158,7 @@ export default function CostInvoiceEntryWorkspace_v2({
               <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">待补全字段</div>
             </div>
             <div className={`p-3 rounded-xl border shadow-sm text-center ${
-              ocr.ocrUiStatus === 'success' ? 'bg-emerald-50 border-emerald-200' : 
+              ocr.ocrUiStatus === 'success' ? 'bg-emerald-50 border-emerald-200' :
               ocr.ocrUiStatus === 'pending' ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'
             }`}>
               <div className={`text-sm font-bold ${ocr.ocrUiStatus === 'success' ? 'text-emerald-700' : 'text-slate-700'}`}>
@@ -161,7 +175,6 @@ export default function CostInvoiceEntryWorkspace_v2({
             </div>
           )}
 
-          {/* Core Selection */}
           <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <div>
               <label className="ui-label mb-1.5 flex items-center gap-1">
@@ -187,7 +200,6 @@ export default function CostInvoiceEntryWorkspace_v2({
             </div>
           </div>
 
-          {/* Invoice Basic Info */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">票据基本信息</h4>
             <div className="grid grid-cols-2 gap-4">
@@ -229,7 +241,6 @@ export default function CostInvoiceEntryWorkspace_v2({
             </div>
           </div>
 
-          {/* Amounts */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">金额与税率</h4>
             <div className="grid grid-cols-2 gap-4">
@@ -275,7 +286,6 @@ export default function CostInvoiceEntryWorkspace_v2({
             </div>
           </div>
 
-          {/* Seller & Goods */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">详情信息</h4>
             <div className="space-y-4">
@@ -314,19 +324,12 @@ export default function CostInvoiceEntryWorkspace_v2({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => {
-                  if (confirm('确定清空所有识别结果和手动填写内容？')) {
-                    setForm(initialCostInvoiceForm());
-                    ocr.resetOcrMeta();
-                    setTaxRateInput('');
-                  }
-                }}
+                onClick={handleResetForm}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
               >
                 <FaEraser /> 清空表单
@@ -336,15 +339,7 @@ export default function CostInvoiceEntryWorkspace_v2({
               <button
                 type="button"
                 onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    onClose();
-                  } catch (err) {
-                    console.error('[CostInvoiceEntryWorkspace_v2] 取消按钮点击失败', err);
-                  }
-                }}
+                onClick={handleCloseClick}
                 className="pointer-events-auto px-6 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all active:scale-95"
               >
                 取消
