@@ -17,7 +17,7 @@ type Options = {
 export function useSafeFileInput({ disabled = false, accept, multiple = false, onFiles }: Options) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const pickerSessionRef = useRef(false);
   const suppressUntilRef = useRef(0);
   const disabledRef = useRef(disabled);
