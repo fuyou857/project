@@ -59,7 +59,12 @@ export function ContractPaymentDrillDown({ contractId, type, contractName }: Con
   }, [fetchRecords]);
 
   const handleClose = useCallback(() => {
-    setOpen(false);
+    try {
+      setOpen(false);
+    } catch (err) {
+      console.error('[ContractPaymentDrillDown] handleClose failed', err);
+      setOpen(false);
+    }
   }, []);
 
   const formatMoney = (val: number) =>

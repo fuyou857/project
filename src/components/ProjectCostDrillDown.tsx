@@ -100,7 +100,12 @@ export function ProjectCostDrillDown({ projectId, projectName }: ProjectCostDril
   }, [fetchCostAndDetails]);
 
   const handleClose = useCallback(() => {
-    setOpen(false);
+    try {
+      setOpen(false);
+    } catch (err) {
+      console.error('[ProjectCostDrillDown] handleClose failed', err);
+      setOpen(false);
+    }
   }, []);
 
   if (!open) {

@@ -114,18 +114,6 @@ export default function CostInvoiceEntryWorkspace_v2({
             ))}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onClose();
-          }}
-          className="pointer-events-auto cursor-pointer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-          aria-label="关闭"
-        >
-          <FaTimes size={20} />
-        </button>
       </div>
 
       <div className="flex-1 flex min-h-0 overflow-hidden">

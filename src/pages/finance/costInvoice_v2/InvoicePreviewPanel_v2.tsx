@@ -26,7 +26,7 @@ export default function InvoicePreviewPanel_v2({
   progressLabel,
   disabled
 }: Props) {
-  const { inputRef, inputId, openPicker, onInputChange } = useSafeFileInput({
+  const { inputRef, inputId, triggerRef, openPicker, onInputChange } = useSafeFileInput({
     disabled,
     accept: COST_INVOICE_ACCEPT,
     multiple: true,
@@ -91,6 +91,7 @@ export default function InvoicePreviewPanel_v2({
     <div className="flex flex-col h-full space-y-4">
       {/* Upload Area */}
       <motion.div
+        ref={triggerRef}
         className={`relative rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-6 text-center ${
           disabled ? 'bg-slate-50 border-slate-200 cursor-not-allowed' : 'bg-white border-blue-200 hover:border-blue-500 hover:shadow-md cursor-pointer group'
         }`}

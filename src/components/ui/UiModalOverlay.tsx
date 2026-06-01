@@ -55,11 +55,11 @@ export default function UiModalOverlay({
   useBodyScrollLock(open);
 
   useEffect(() => {
-    if (!open) setExiting(true);
-  }, [open]);
-
-  useEffect(() => {
-    if (open) setExiting(false);
+    if (open) {
+      setExiting(false);
+    } else {
+      setExiting(true);
+    }
   }, [open]);
 
   const requestClose = useCallback(() => {

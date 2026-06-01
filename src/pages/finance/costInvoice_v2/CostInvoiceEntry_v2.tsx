@@ -283,7 +283,7 @@ export default function CostInvoiceEntry_v2() {
       <UiModalOverlay
         open={showModal}
         onClose={handleClose}
-        showCloseButton={false}
+        showCloseButton={true}
         panelClassName="bg-white rounded-xl p-0 w-full max-w-[min(96vw,1400px)] max-h-[95vh] overflow-hidden shadow-2xl"
       >
         <CostInvoiceEntryWorkspace_v2

@@ -85,7 +85,10 @@ export function ConfirmDialog({
                 <p id="confirm-dialog-message" className="text-slate-300 mb-6">{message}</p>
                 <div className="flex justify-end gap-3">
                   <button
-                    onClick={onClose}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClose();
+                    }}
                     disabled={loading}
                     className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
                   >
@@ -93,7 +96,10 @@ export function ConfirmDialog({
                   </button>
                   <button
                     ref={confirmRef}
-                    onClick={onConfirm}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onConfirm();
+                    }}
                     disabled={loading}
                     className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 ${styles.button}`}
                     aria-busy={loading}
