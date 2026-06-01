@@ -113,7 +113,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({
       <div className="bg-white rounded-xl w-full max-h-[95vh] overflow-hidden shadow-xl">
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-lg font-semibold">{material ? '编辑物资' : '新增物资'}</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="p-1 text-gray-400 hover:text-gray-600 rounded">
             <FaTimes className="w-5 h-5" />
           </button>
         </div>

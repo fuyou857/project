@@ -539,7 +539,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={handleCloseMobileMenu}
+              onClick={(e) => { e.stopPropagation(); handleCloseMobileMenu(); }}
               className="fixed inset-0 z-30 bg-black/50 md:hidden"
             />
           )}

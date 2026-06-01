@@ -309,7 +309,7 @@ export default function SignatoryList() {
               <h3 className="text-xl font-bold text-gray-800">
                 {editingId ? '编辑签约单位' : '新增签约单位'}
               </h3>
-              <button onClick={handleClose} className="text-gray-500 hover:text-gray-800">
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }} className="text-gray-500 hover:text-gray-800">
                 <FaTimes />
               </button>
             </div>
