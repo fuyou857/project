@@ -62,7 +62,7 @@ export default function PreviewModalFooter({ contract, pdfBusy, onConvertPdf, on
           </button>
         )}
       </div>
-      <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+      <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
         关闭
       </button>
     </div>

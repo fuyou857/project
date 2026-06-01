@@ -113,7 +113,7 @@ export default function SubmitApprovalModal({
         >
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-            <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800">
+            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="text-gray-500 hover:text-gray-800">
               <FaTimes />
             </button>
           </div>
@@ -202,7 +202,7 @@ export default function SubmitApprovalModal({
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
               className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               取消

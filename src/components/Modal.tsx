@@ -77,6 +77,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', showClose
                 {showCloseButton && (
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       onClose();
                     }}

@@ -28,7 +28,7 @@ export default function ContractDeleteConfirmModal({ open, onClose, onConfirm }:
             <h3 className="text-xl font-bold text-gray-800 mb-4">确认删除</h3>
             <p className="text-gray-700 mb-6">确定要删除该合同吗？此操作不可恢复。</p>
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-500 text-gray-800 rounded-lg">
+              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="px-4 py-2 bg-gray-500 text-gray-800 rounded-lg">
                 取消
               </button>
               <button type="button" onClick={onConfirm} className="px-4 py-2 bg-red-600 text-gray-800 rounded-lg">

@@ -86,6 +86,7 @@ export function ConfirmDialog({
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       onClose();
                     }}
@@ -97,6 +98,7 @@ export function ConfirmDialog({
                   <button
                     ref={confirmRef}
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       onConfirm();
                     }}

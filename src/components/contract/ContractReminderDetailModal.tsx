@@ -50,7 +50,7 @@ export default function ContractReminderDetailModal({
               <h3 className="text-xl font-bold text-gray-800">
                 合同提醒记录 - {contract.contract_name}
               </h3>
-              <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800">
+              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="text-gray-500 hover:text-gray-800">
                 <FaTimes />
               </button>
             </div>

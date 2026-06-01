@@ -90,7 +90,7 @@ export function ContractPaymentDrillDown({ contractId, type, contractName }: Con
               <h3 className="text-lg font-bold text-slate-900">
                 {TYPE_LABELS[type].label}记录 {contractName ? `- ${contractName}` : ''}
               </h3>
-              <button type="button" onClick={handleClose} className="p-1 text-slate-400 hover:text-slate-600" aria-label="关闭">
+              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }} className="p-1 text-slate-400 hover:text-slate-600" aria-label="关闭">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>

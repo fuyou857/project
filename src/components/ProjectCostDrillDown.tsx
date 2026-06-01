@@ -137,7 +137,7 @@ export function ProjectCostDrillDown({ projectId, projectName }: ProjectCostDril
           <h3 className="text-lg font-bold text-slate-900">项目成本 - {projectName}</h3>
           <button 
             type="button" 
-            onClick={handleClose} 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }} 
             className="p-1 text-slate-400 hover:text-slate-600"
             aria-label="关闭"
           >
