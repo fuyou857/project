@@ -1,9 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaCloudUploadAlt, FaChevronLeft, FaChevronRight, FaFilePdf, FaImage, FaFileAlt } from 'react-icons/fa';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSafeFileInput } from '../../../hooks/useSafeFileInput';
 import { COST_INVOICE_ACCEPT, type OcrUiStatus, type InvoiceAttachmentItem } from '../costInvoice/types';
 import { isInvoiceImageMime, isInvoicePdfMime } from '../costInvoice/invoiceFileUtils';
+import { FaCloudUploadAlt } from 'react-icons/fa';
 
 type Props = {
   attachments: InvoiceAttachmentItem[];
@@ -14,9 +13,10 @@ type Props = {
   progress: number;
   progressLabel: string;
   disabled: boolean;
+  debug?: boolean; // 启用调试模式
 };
 
-export default function InvoicePreviewPanel_v2({
+export default function InvoicePreviewPanel_v2_Diagnostic({
   attachments,
   activeIndex,
   onActiveIndexChange,
@@ -24,74 +24,94 @@ export default function InvoicePreviewPanel_v2({
   ocrStatus,
   progress,
   progressLabel,
-  disabled
+  disabled,
+  debug = false
 }: Props) {
-  const fallbackInputRef = useRef<HTMLInputElement>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const logsRef = useRef<string[]>([]);
 
-  const { inputRef, inputId, openPicker, onInputChange } = useSafeFileInput({
+  const addLog = (msg: string) => {
+    if (!debug) return;
+    const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    const logMsg = `[${timestamp}] ${msg}`;
+    logsRef.current.push(logMsg);
+    setDebugLogs([...logsRef.current.slice(-50)]); // 只保留最近 50 条
+    console.log(`[InvoiceUpload] ${msg}`);
+  };
+
+  // 使用原始的 useSafeFileInput hook
+  const { inputRef, inputId, openPicker, onInputChange, isPickerSuppressed } = useSafeFileInput({
     disabled,
     accept: COST_INVOICE_ACCEPT,
     multiple: true,
-    onFiles
+    onFiles: (files) => {
+      addLog(`onFiles callback triggered with ${files.length} files`);
+      onFiles(files);
+    }
   });
 
   const current = attachments[activeIndex];
 
   const handleDrop = useCallback((e: React.DragEvent) => {
+    addLog('handleDrop triggered');
     e.preventDefault();
-    if (disabled) return;
+    if (disabled) {
+      addLog('handleDrop: blocked - disabled=true');
+      return;
+    }
     const files = Array.from(e.dataTransfer.files);
+    addLog(`handleDrop: ${files.length} files dropped`);
     if (files.length > 0) onFiles(files);
-  }, [disabled, onFiles]);
+  }, [disabled, onFiles, addLog]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
-    if (disabled) return;
+    addLog(`handleClick triggered, disabled=${disabled}`);
+    addLog(`  event.target.tagName=${(e.target as HTMLElement).tagName}`);
+    addLog(`  event.currentTarget.tagName=${(e.currentTarget as HTMLElement).tagName}`);
 
-    e.preventDefault();
-    e.stopPropagation();
-
-    try {
-      openPicker(e);
-    } catch (err) {
-      console.error('[InvoiceUpload] openPicker failed:', err);
-
-      const input = inputRef.current || fallbackInputRef.current;
-      if (input && !input.disabled) {
-        try {
-          input.click();
-        } catch (fallbackErr) {
-          console.error('[InvoiceUpload] fallback input.click() also failed:', fallbackErr);
-        }
+    if (!disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      addLog('calling openPicker...');
+      addLog(`  isPickerSuppressed=${isPickerSuppressed()}`);
+      addLog(`  inputRef.current exists=${!!inputRef.current}`);
+      if (inputRef.current) {
+        addLog(`  input.disabled=${inputRef.current.disabled}`);
+        addLog(`  input.type=${inputRef.current.type}`);
       }
+      openPicker(e);
+      addLog('openPicker called');
+    } else {
+      addLog('handleClick: blocked - disabled=true');
     }
-  }, [disabled, openPicker, inputRef]);
+  }, [disabled, openPicker, addLog, isPickerSuppressed, inputRef]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    addLog(`handleKeyDown triggered, key=${e.key}, disabled=${disabled}`);
     if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       e.stopPropagation();
-
-      try {
-        openPicker();
-      } catch (err) {
-        console.error('[InvoiceUpload] openPicker (keyboard) failed:', err);
-
-        const input = inputRef.current || fallbackInputRef.current;
-        if (input && !input.disabled) {
-          input.click();
-        }
-      }
+      addLog('calling openPicker from keyboard');
+      openPicker();
     }
-  }, [disabled, openPicker, inputRef]);
+  }, [disabled, openPicker, addLog]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onInputChange(e);
-  }, [onInputChange]);
+  // 添加全局点击监控（仅在调试模式）
+  useEffect(() => {
+    if (!debug) return;
+
+    const logGlobalClick = (e: MouseEvent) => {
+      addLog(`Global click: target=${(e.target as HTMLElement)?.tagName?.toLowerCase() || 'unknown'}, className=${(e.target as HTMLElement)?.className?.toString()?.slice(0, 50) || 'none'}`);
+    };
+
+    document.addEventListener('click', logGlobalClick, true); // 捕获阶段
+    return () => document.removeEventListener('click', logGlobalClick, true);
+  }, [debug, addLog]);
 
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex flex-col h-full space-y-4 relative">
       {/* Upload Area */}
-      <motion.div
+      <div
         className={`relative rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-6 text-center ${
           disabled ? 'bg-slate-50 border-slate-200 cursor-not-allowed' : 'bg-white border-blue-200 hover:border-blue-500 hover:shadow-md cursor-pointer group'
         }`}
@@ -99,7 +119,10 @@ export default function InvoicePreviewPanel_v2({
         tabIndex={disabled ? -1 : 0}
         aria-label={disabled ? undefined : '点击或拖拽上传发票文件'}
         aria-disabled={disabled || undefined}
-        onDragOver={(e: React.DragEvent) => e.preventDefault()}
+        onDragOver={(e: React.DragEvent) => {
+          addLog('onDragOver triggered');
+          e.preventDefault();
+        }}
         onDrop={handleDrop}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
@@ -109,50 +132,42 @@ export default function InvoicePreviewPanel_v2({
         }`}>
           <FaCloudUploadAlt size={24} />
         </div>
-        
+
         <div className="space-y-1">
           <p className={`text-sm font-bold ${disabled ? 'text-slate-400' : 'text-slate-700'}`}>
-            点击或拖拽上传发票
+            点击或拖拽上传发票{debug ? ' (调试模式)' : ''}
           </p>
           <p className="text-[10px] text-slate-400">
             支持 JPG, PNG, PDF, OFD (最大 12MB)
           </p>
         </div>
 
-        {/* Progress Overlay */}
-        <AnimatePresence>
-          {(ocrStatus === 'pending' || progress > 0) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-white/90 rounded-2xl flex flex-col items-center justify-center p-6"
-            >
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
-                <motion.div
-                  className="h-full bg-blue-600"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                />
-              </div>
-              <p className="text-xs font-bold text-blue-700">{progressLabel || '正在识别...'}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Hidden file input - must be rendered in DOM for the picker to work */}
+        {/* Hidden file input */}
         <input
-          ref={fallbackInputRef}
+          ref={inputRef}
           id={inputId}
           type="file"
           accept={COST_INVOICE_ACCEPT}
           multiple
           disabled={disabled}
-          onChange={handleInputChange}
+          onChange={(e) => {
+            addLog('input onChange triggered');
+            onInputChange(e);
+          }}
           className="hidden"
           tabIndex={-1}
         />
-      </motion.div>
+
+        {/* Debug Panel */}
+        {debug && (
+          <div className="absolute top-2 right-2 bg-black/90 text-green-400 p-2 rounded text-xs font-mono max-w-xs max-h-40 overflow-y-auto z-50">
+            <div className="font-bold mb-1 text-yellow-400">调试日志</div>
+            {debugLogs.map((log, i) => (
+              <div key={i} className="text-[10px] leading-tight">{log}</div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Preview Area */}
       <div className="flex-1 bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-800 shadow-inner">
@@ -165,7 +180,6 @@ export default function InvoicePreviewPanel_v2({
                 <iframe src={current.url} className="w-full h-full border-0 bg-white" title="PDF预览" />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
-                  <FaFileAlt size={48} />
                   <p className="text-sm">此格式不支持预览</p>
                   <a href={current.url} target="_blank" rel="noreferrer" className="text-blue-400 text-xs hover:underline">
                     在新窗口打开
@@ -173,7 +187,7 @@ export default function InvoicePreviewPanel_v2({
                 </div>
               )}
             </div>
-            
+
             {/* Attachment Nav */}
             {attachments.length > 1 && (
               <div className="bg-slate-800/80 backdrop-blur-sm px-4 py-2 flex items-center justify-between text-white text-xs">
@@ -183,7 +197,7 @@ export default function InvoicePreviewPanel_v2({
                   disabled={activeIndex === 0}
                   className="p-1 hover:bg-white/10 rounded disabled:opacity-30"
                 >
-                  <FaChevronLeft />
+                  ←
                 </button>
                 <span className="font-mono">
                   {activeIndex + 1} / {attachments.length}
@@ -194,36 +208,16 @@ export default function InvoicePreviewPanel_v2({
                   disabled={activeIndex === attachments.length - 1}
                   className="p-1 hover:bg-white/10 rounded disabled:opacity-30"
                 >
-                  <FaChevronRight />
+                  →
                 </button>
               </div>
             )}
           </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 gap-3">
-            <div className="flex gap-4 opacity-20">
-              <FaImage size={32} />
-              <FaFilePdf size={32} />
-            </div>
             <p className="text-xs font-medium uppercase tracking-widest">暂无预览内容</p>
           </div>
         )}
-      </div>
-
-      {/* Footer Info */}
-      <div className="px-1 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${
-            ocrStatus === 'success' ? 'bg-emerald-500 animate-pulse' : 
-            ocrStatus === 'failed' ? 'bg-red-500' : 'bg-slate-300'
-          }`} />
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-            System Ready
-          </span>
-        </div>
-        <p className="text-[10px] text-slate-400">
-          Local OCR Engine v2.0
-        </p>
       </div>
     </div>
   );

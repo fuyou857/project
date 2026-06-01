@@ -4,9 +4,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { fetchDrillDownRecords } from './api';
+import UiModalOverlay from '@/components/ui/UiModalOverlay';
 
 interface DrillDownModalProps {
   title?: string;
@@ -81,20 +81,12 @@ export default function DrillDownModal({ title, projectId, machineId, month, onC
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+    <UiModalOverlay
+      open={true}
+      onClose={onClose}
+      panelClassName="w-full max-w-4xl"
     >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white rounded-xl overflow-hidden flex flex-col">
         {/* 标题栏 */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h3 className="text-lg font-bold text-gray-800">
@@ -109,7 +101,7 @@ export default function DrillDownModal({ title, projectId, machineId, month, onC
         </div>
 
         {/* 内容区 */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="overflow-y-auto p-6 max-h-[70vh]">
           {loading ? (
             <div className="text-center py-12 text-gray-500">加载中...</div>
           ) : records.length === 0 ? (
@@ -193,7 +185,7 @@ export default function DrillDownModal({ title, projectId, machineId, month, onC
             </>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </UiModalOverlay>
   );
 }
