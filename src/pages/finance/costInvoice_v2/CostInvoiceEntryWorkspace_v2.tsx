@@ -118,6 +118,7 @@ export default function CostInvoiceEntryWorkspace_v2({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             onClose();
           }}
           className="pointer-events-auto cursor-pointer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"

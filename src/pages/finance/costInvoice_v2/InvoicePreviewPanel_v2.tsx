@@ -52,14 +52,15 @@ export default function InvoicePreviewPanel_v2({
       openPicker(e);
     } catch (err) {
       console.error('[InvoiceUpload] openPicker failed:', err);
+    }
 
-      const input = inputRef.current;
-      if (input && !input.disabled) {
-        try {
-          input.click();
-        } catch (fallbackErr) {
-          console.error('[InvoiceUpload] fallback input.click() also failed:', fallbackErr);
-        }
+    // 直接回退：无论 openPicker 是否成功，都尝试直接点击 input
+    const input = inputRef.current;
+    if (input && !input.disabled) {
+      try {
+        input.click();
+      } catch (fallbackErr) {
+        console.error('[InvoiceUpload] fallback input.click() also failed:', fallbackErr);
       }
     }
   }, [disabled, openPicker, inputRef]);
