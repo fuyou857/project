@@ -61,6 +61,7 @@ const PaymentRegistration = lazy(() => import('../pages/finance/PaymentRegistrat
 const UninvoicedPayments = lazy(() => import('../pages/finance/UninvoicedPayments'));
 const Login = lazy(() => import('../pages/Login'));
 const TestOnlyOffice = lazy(() => import('../pages/TestOnlyOffice'));
+const ProjectCostReport = lazy(() => import('../pages/reports/ProjectCostReport'));
 
 type RouteElement = React.ReactElement | null;
 
@@ -202,6 +203,8 @@ const routes: RouteConfig[] = [
 
   { path: '/warnings', element: <ProtectedLayout><LazyPage><Warnings /></LazyPage></ProtectedLayout> },
   { path: '/warnings/config', element: <ProtectedLayout><LazyPage><Warnings /></LazyPage></ProtectedLayout> },
+
+  { path: '/reports/project-cost', element: <ProtectedLayout><LazyPage><ProjectCostReport /></LazyPage></ProtectedLayout> },
 
   { path: '/base-data/party-a', element: <ProtectedLayout><LazyPage><BaseData /></LazyPage></ProtectedLayout> },
   { path: '/base-data/signatory', element: <ProtectedLayout><LazyPage><BaseData /></LazyPage></ProtectedLayout> },

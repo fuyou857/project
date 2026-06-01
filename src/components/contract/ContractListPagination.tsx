@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface ContractListPaginationProps {
   total: number;
   page: number;
@@ -6,7 +8,7 @@ interface ContractListPaginationProps {
 }
 
 /** 合同列表页底部分页条（收入/支出合同列表共用） */
-export default function ContractListPagination({
+const ContractListPagination = memo(function ContractListPagination({
   total,
   page,
   totalPages,
@@ -40,4 +42,6 @@ export default function ContractListPagination({
       </div>
     </div>
   );
-}
+});
+
+export default ContractListPagination;

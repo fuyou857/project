@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 interface Column<T> {
@@ -22,7 +22,7 @@ interface DataTableProps<T> {
   className?: string;
 }
 
-export function DataTable<T extends { id?: string }>({
+export const DataTable = memo(function DataTable<T extends { id?: string }>({
   data,
   columns,
   loading = false,
@@ -122,4 +122,4 @@ export function DataTable<T extends { id?: string }>({
       {renderPagination()}
     </div>
   );
-}
+});

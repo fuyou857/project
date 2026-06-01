@@ -78,7 +78,7 @@ describe('invoice entry modal interaction scenario', () => {
     const { dirname, join } = await import('node:path');
     const { fileURLToPath } = await import('node:url');
     const dir = dirname(fileURLToPath(import.meta.url));
-    const src = readFileSync(join(dir, 'costInvoice/CostInvoiceEntryWorkspace.tsx'), 'utf8');
+    const src = readFileSync(join(dir, 'costInvoice_v2/CostInvoiceEntryWorkspace_v2.tsx'), 'utf8');
     const idx = src.lastIndexOf('取消');
     const cancelBtn = src.slice(Math.max(0, idx - 400), idx + 20);
     expect(cancelBtn).toContain('pointer-events-auto');

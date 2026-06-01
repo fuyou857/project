@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaPlus, FaCog } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import { supabase } from '../../../supabase/client';
 import { useCompanyScope } from '../../../hooks/useCompanyScope';
 import { useCostInvoiceForm_v2 } from './useCostInvoiceForm_v2';
@@ -28,7 +28,6 @@ import { addLog, logAction, logModule } from '../../../services/logService';
 import { getStoredUser } from '../../../utils/sessionUser';
 import { packExtendedRemark, initialCostInvoiceForm, type OcrUiStatus, type CostInvoiceForm } from '../costInvoice/types';
 import CostInvoiceList from '../CostInvoiceList';
-import { isFeatureEnabled, setFeatureEnabled, FEATURE_FLAGS } from '../../../utils/featureFlags';
 import { deferModalOpen } from '../../../utils/deferModalOpen';
 import { resetBodyInteractionLock } from '../../../utils/bodyInteractionLock';
 
@@ -269,20 +268,6 @@ export default function CostInvoiceEntry_v2() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-gray-800">成本发票录入</h3>
-          <p className="text-xs text-slate-500 mt-1">
-            智能录入引擎 V2 · 已正式上线
-            <button 
-              onClick={() => {
-                if (confirm('确认切换回旧版录入页面？')) {
-                  setFeatureEnabled(FEATURE_FLAGS.COST_INVOICE_V2, false);
-                  window.location.reload();
-                }
-              }}
-              className="ml-2 text-blue-600 hover:underline flex items-center gap-1 inline-flex"
-            >
-              <FaCog /> 兼容模式
-            </button>
-          </p>
         </div>
         <button
           type="button"
@@ -298,6 +283,7 @@ export default function CostInvoiceEntry_v2() {
       <UiModalOverlay
         open={showModal}
         onClose={handleClose}
+        showCloseButton={false}
         panelClassName="bg-white rounded-xl p-0 w-full max-w-[min(96vw,1400px)] max-h-[95vh] overflow-hidden shadow-2xl"
       >
         <CostInvoiceEntryWorkspace_v2

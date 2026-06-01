@@ -26,6 +26,7 @@ import {
   FaBell,
   FaFileAlt,
   FaTrash,
+  FaChartBar,
 } from 'react-icons/fa';
 import type { NavMenuItem } from '../types/navMenu';
 import {
@@ -211,6 +212,14 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
       { path: '/workers', icon: FaUserFriends, label: '农民工档案' },
       { path: '/workers/attendance', icon: FaUserFriends, label: '考勤记录' },
       { path: '/workers/payment', icon: FaUserFriends, label: '工资台账' },
+    ],
+  },
+  {
+    path: '/reports',
+    icon: FaChartBar,
+    label: '报表中心',
+    children: [
+      { path: '/reports/project-cost', icon: FaChartBar, label: '项目成本报表' },
     ],
   },
   {

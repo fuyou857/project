@@ -27,8 +27,7 @@ export default function InvoicePreviewPanel_v2({
   disabled
 }: Props) {
   // Using the improved safe file input hook (V7 终极版)
-  // 不再需要在模板中手动渲染 <input>，已由 hook 离线管理
-  const { triggerRef, openPicker } = useSafeFileInput({
+  const { inputRef, inputId, openPicker, onInputChange } = useSafeFileInput({
     disabled,
     accept: COST_INVOICE_ACCEPT,
     multiple: true,
@@ -44,22 +43,37 @@ export default function InvoicePreviewPanel_v2({
     if (files.length > 0) onFiles(files);
   }, [disabled, onFiles]);
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (!disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPicker(e);
+    }
+  }, [disabled, openPicker]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPicker();
+    }
+  }, [disabled, openPicker]);
+
   return (
     <div className="flex flex-col h-full space-y-4">
       {/* Upload Area */}
       <motion.div
         className={`relative rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-6 text-center ${
-          disabled ? 'bg-slate-50 border-slate-200 cursor-not-allowed' : 'bg-white border-blue-200 hover:border-blue-500 cursor-pointer group'
+          disabled ? 'bg-slate-50 border-slate-200 cursor-not-allowed' : 'bg-white border-blue-200 hover:border-blue-500 hover:shadow-md cursor-pointer group'
         }`}
-        onDragOver={e => e.preventDefault()}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label={disabled ? undefined : '点击或拖拽上传发票文件'}
+        aria-disabled={disabled || undefined}
+        onDragOver={(e: React.DragEvent) => e.preventDefault()}
         onDrop={handleDrop}
-        onClick={(e) => {
-          if (!disabled) {
-            e.preventDefault();
-            e.stopPropagation();
-            openPicker(e);
-          }
-        }}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
       >
         <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
           disabled ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
@@ -96,6 +110,19 @@ export default function InvoicePreviewPanel_v2({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Hidden file input - must be rendered in DOM for the picker to work */}
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          accept={COST_INVOICE_ACCEPT}
+          multiple
+          disabled={disabled}
+          onChange={onInputChange}
+          className="hidden"
+          tabIndex={-1}
+        />
       </motion.div>
 
       {/* Preview Area */}

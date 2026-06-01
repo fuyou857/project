@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 type EmptyStateProps = {
   title?: string;
@@ -7,7 +7,7 @@ type EmptyStateProps = {
   className?: string;
 };
 
-export default function EmptyState({
+const EmptyState = memo(function EmptyState({
   title = '暂无数据',
   description,
   action,
@@ -20,4 +20,6 @@ export default function EmptyState({
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
-}
+});
+
+export default EmptyState;

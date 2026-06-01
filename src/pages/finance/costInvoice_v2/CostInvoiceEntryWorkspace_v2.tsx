@@ -116,13 +116,11 @@ export default function CostInvoiceEntryWorkspace_v2({
         </div>
         <button
           type="button"
-          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
-            e.preventDefault();
             e.stopPropagation();
             onClose();
           }}
-          className="pointer-events-auto p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+          className="pointer-events-auto cursor-pointer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
           aria-label="关闭"
         >
           <FaTimes size={20} />
