@@ -1,0 +1,25 @@
+export const TABLES = {
+  projects: 'projects',
+  income_contracts: 'income_contracts',
+  expense_contracts: 'expense_contracts',
+  cost_invoices: 'cost_invoices',
+  income_invoices: 'income_invoices',
+  approvals: 'approvals',
+  approval_tasks: 'approval_tasks',
+  materials: 'materials',
+  material_stock: 'material_stock',
+  machines: 'machines',
+  machine_shift: 'machine_shift',
+  party_a: 'party_a_units',
+  party_b: 'party_b_units',
+  companies: 'companies',
+  users: 'users',
+  roles: 'roles',
+  contracts: 'contracts',
+  payments: 'payments',
+  milestones: 'milestones',
+  reminders: 'reminders',
+  logs: 'system_logs',
+} as const;
+
+export type TableName = keyof typeof TABLES;

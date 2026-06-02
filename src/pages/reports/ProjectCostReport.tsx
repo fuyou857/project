@@ -92,7 +92,7 @@ export default function ProjectCostReport() {
     );
   }, [filtered]);
 
-  function handleExport() {
+  async function handleExport() {
     const rows = filtered.map(row => ({
       '项目名称': row.project_name,
       '材料成本': Number(row.material_cost || 0),
@@ -100,7 +100,7 @@ export default function ProjectCostReport() {
       '劳务成本': Number(row.labor_cost || 0),
       '总成本': Number(row.total_cost || 0),
     }));
-    downloadJsonRowsAsXlsx(rows, '项目成本报表', `项目成本报表_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    await downloadJsonRowsAsXlsx(rows, '项目成本报表', `项目成本报表_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   return (

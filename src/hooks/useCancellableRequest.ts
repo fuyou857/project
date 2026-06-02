@@ -2,13 +2,13 @@ import { useRef, useCallback, useEffect } from 'react';
 
 interface CancellablePromise<T> {
   promise: Promise<T>;
-  abort: () => void;
+  cancel: () => void;
 }
 
 export function useCancellableRequest() {
   const abortControllersRef = useRef<AbortController[]>([]);
 
-  const cancellableRequest = useCallback(<T,>(
+  const cancellableFetch = useCallback(<T,>(
     url: string,
     options?: RequestInit
   ): CancellablePromise<T> => {
@@ -26,14 +26,14 @@ export function useCancellableRequest() {
       return response.json() as T;
     });
 
-    const abort = () => {
+    const cancel = () => {
       abortController.abort();
     };
 
-    return { promise, abort };
+    return { promise, cancel };
   }, []);
 
-  const cancellableSupabaseRequest = useCallback(<T,>(
+  const cancellableSupabase = useCallback(<T,>(
     requestPromise: Promise<T>
   ): CancellablePromise<T> => {
     let isCancelled = false;
@@ -48,19 +48,19 @@ export function useCancellableRequest() {
         });
     });
 
-    const abort = () => {
+    const cancel = () => {
       isCancelled = true;
     };
 
-    return { promise, abort };
+    return { promise, cancel };
   }, []);
 
   const cancelAll = useCallback(() => {
     abortControllersRef.current.forEach((controller) => {
       try {
         controller.abort();
-      } catch {
-        /* ignore */
+      } catch (e) {
+        // 忽略已取消的请求
       }
     });
     abortControllersRef.current = [];
@@ -73,8 +73,8 @@ export function useCancellableRequest() {
   }, [cancelAll]);
 
   return {
-    cancellableRequest,
-    cancellableSupabaseRequest,
+    cancellableFetch,
+    cancellableSupabase,
     cancelAll,
   };
 }

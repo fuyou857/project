@@ -228,7 +228,7 @@ export default function IncomeContractList() {
       合同金额: c.contract_amount, 签订日期: c.signing_date,
       状态: incomeContractExportStatusLabel(c.status),
     }));
-    downloadJsonRowsAsXlsx(rows, '收入合同', '收入合同列表.xlsx');
+    await downloadJsonRowsAsXlsx(rows, '收入合同', '收入合同列表.xlsx');
     showToast('success', '导出成功');
   }
 

@@ -256,7 +256,7 @@ export default function ApprovalCenter() {
       return;
     }
     const name = exportTab === 'pending' ? '审批待办' : '我发起的审批';
-    downloadJsonRowsAsXlsx(rows, name, `${name}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    await downloadJsonRowsAsXlsx(rows, name, `${name}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   function statusLabel(status: string) {

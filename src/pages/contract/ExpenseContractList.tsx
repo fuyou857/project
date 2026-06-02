@@ -292,7 +292,7 @@ export default function ExpenseContractList() {
       乙方单位: (c as any).party_b?.unit_name || '', 合同金额: expenseContractAmountValue(c), 签订日期: c.sign_date,
       状态: expenseContractExportStatusLabel(c.status),
     }));
-    downloadJsonRowsAsXlsx(rows, '支出合同', '支出合同列表.xlsx');
+    await downloadJsonRowsAsXlsx(rows, '支出合同', '支出合同列表.xlsx');
     showToast('success', '导出成功');
   }
 
