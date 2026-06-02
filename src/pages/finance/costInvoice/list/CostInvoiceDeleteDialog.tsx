@@ -32,7 +32,7 @@ export default function CostInvoiceDeleteDialog({ open, invoiceNumber, deleting,
       <div className="flex justify-end gap-3">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCancel(); }}
           disabled={deleting}
           className="min-h-[44px] rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 active:scale-[0.98]"
         >

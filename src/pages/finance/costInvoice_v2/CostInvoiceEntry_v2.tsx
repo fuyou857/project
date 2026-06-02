@@ -121,10 +121,16 @@ export default function CostInvoiceEntry_v2() {
   }, [resetForm, clearWarnings, setForm]);
 
   const handleClose = useCallback(() => {
+    console.log('[DEBUG] handleClose called, ocrStatus:', ocr.ocrUiStatus);
     try {
       if (ocr.ocrUiStatus === 'pending') {
-        if (!window.confirm('识别正在进行中，确定要关闭吗？')) return;
+        console.log('[DEBUG] OCR pending, showing confirm');
+        if (!window.confirm('识别正在进行中，确定要关闭吗？')) {
+          console.log('[DEBUG] User cancelled close');
+          return;
+        }
       }
+      console.log('[DEBUG] Closing modal');
       setShowModal(false);
       resetForm();
       resetBodyInteractionLock();
