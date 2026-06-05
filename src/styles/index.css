@@ -40,6 +40,24 @@
     @apply rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25;
   }
 
+  /**
+   * file input：勿用 Tailwind hidden(display:none)，Edge 等浏览器无法打开文件框。
+   * - ui-file-input-safe：按钮/脚本触发（离屏但仍存在于 DOM）
+   * - ui-file-input-overlay：置于 relative 容器或 label 内，覆盖点击区域
+   */
+  .ui-file-input-safe {
+    @apply absolute overflow-hidden opacity-[0.001];
+    width: 1px;
+    height: 1px;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .ui-file-input-overlay {
+    @apply absolute inset-0 z-10 block h-full w-full cursor-pointer opacity-[0.001];
+  }
+
   /* ---- 表格外层容器 ---- */
   .ui-table-wrap {
     @apply overflow-x-auto rounded-xl border border-gray-200 bg-white;
