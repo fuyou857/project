@@ -739,7 +739,7 @@ export default function ProjectDetail() {
                       <input
                       type="file"
                       ref={(el) => fileInputRefs.current[att.type] = el}
-                      className="hidden"
+                      className="ui-file-input-safe" data-file-upload-field="true"
                       onChange={(e) => e.target.files?.[0] && handleAttachmentUpload(att.type, e.target.files[0])} />
                     
                       <button
@@ -966,7 +966,7 @@ export default function ProjectDetail() {
       <AnimatePresence>
         {showSupplierModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setShowSupplierModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
               <div className="flex items-center justify-between mb-6"><h3 className="text-xl font-bold text-gray-800">{editingSupplier ? '编辑乙方单位' : '新增乙方单位'}</h3><button onClick={() => setShowSupplierModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               {editingSupplier ?
             <div className="space-y-4">
@@ -989,7 +989,7 @@ export default function ProjectDetail() {
       <AnimatePresence>
         {showAddPartyBModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setShowAddPartyBModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
               <div className="flex items-center justify-between mb-6"><h3 className="text-xl font-bold text-gray-800">从乙方单位库添加</h3><button onClick={() => setShowAddPartyBModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <div className="max-h-64 overflow-y-auto bg-gray-50 border border-slate-600 rounded-lg p-3 space-y-2">
                 {partyBList.length === 0 ? <div className="text-gray-500 text-center py-4">暂无乙方单位，请先在基础数据中添加</div> : partyBList.map((p) =>
@@ -1012,7 +1012,7 @@ export default function ProjectDetail() {
       <AnimatePresence>
         {showDetailModal && viewingSupplier &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setShowDetailModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6"><h3 className="text-xl font-bold text-gray-800">乙方单位详情</h3><button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 py-2 border-b border-gray-200"><span className="text-gray-500">乙方单位名称</span><span className="text-gray-800">{viewingSupplier.name}</span></div>
@@ -1026,7 +1026,7 @@ export default function ProjectDetail() {
       <AnimatePresence>
         {showAddModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={(e) => {if (e.target === e.currentTarget) {setShowAddModal(null);setAddForm({});}}}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-800">
                   {(() => {if (showAddModal === 'otherIncome') {return '添加其他收入';} else {if (showAddModal === 'deposit') {return '添加保证金记录';} else {return '添加其他事项';}}})()}
@@ -1068,7 +1068,7 @@ export default function ProjectDetail() {
       <AnimatePresence>
         {previewFile &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setPreviewFile(null)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <h3 className="text-lg font-bold text-gray-800">{previewFile.file_name}</h3>
                 <div className="flex items-center gap-2">
@@ -1105,9 +1105,7 @@ export default function ProjectDetail() {
           onClick={() => setShowDeleteConfirm(false)}>
           
             <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200"
             onClick={(e) => e.stopPropagation()}>
             

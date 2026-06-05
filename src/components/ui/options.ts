@@ -1,10 +1,27 @@
 import type { UiSelectOption } from './SearchableSelect';
 
+export type ProjectOptionSource = {
+  id: string;
+  name: string;
+  project_code?: string | null;
+  project_manager?: string | null;
+};
+
+function projectOptionLabel(p: ProjectOptionSource): string {
+  const name = p.name?.trim() || p.id;
+  const code = p.project_code?.trim();
+  if (code) return `[${code}] ${name}`;
+  return name;
+}
+
 export function projectSelectOptions(
-  projects: { id: string; name: string }[],
+  projects: ProjectOptionSource[],
   emptyLabel = '选择项目',
 ): UiSelectOption[] {
-  return [{ value: '', label: emptyLabel }, ...projects.map(p => ({ value: p.id, label: p.name }))];
+  return [
+    { value: '', label: emptyLabel },
+    ...projects.map(p => ({ value: p.id, label: projectOptionLabel(p) })),
+  ];
 }
 
 export function contractSelectOptions(

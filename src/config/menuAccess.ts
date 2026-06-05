@@ -5,9 +5,16 @@
  * 否则部分生产打包下该导出可能被解析为 undefined，模块初始化即抛错导致整站白屏。
  */
 import { NAV_MENU_ITEMS } from './navMenuDefinition';
-import { buildTopPathRequiresAnyPermFromNav } from './navPermissionHelpers';
+import {
+  buildNavChildToParentPathMap,
+  buildNavChildToParentPathEntries,
+  buildTopPathRequiresAnyPermFromNav,
+} from './navPermissionHelpers';
 
 export const TOP_PATH_REQUIRES_ANY_PERM = buildTopPathRequiresAnyPermFromNav(NAV_MENU_ITEMS);
+
+const NAV_CHILD_TO_PARENT = buildNavChildToParentPathMap(NAV_MENU_ITEMS);
+const NAV_CHILD_TO_PARENT_ENTRIES = buildNavChildToParentPathEntries(NAV_MENU_ITEMS);
 
 /** 顶层菜单 path 列表（越长越优先匹配；同长度再按字典序，避免排序不稳定） */
 export function topMenuPrefixesSorted(): string[] {
@@ -25,6 +32,13 @@ export function resolveMenuParentPath(pathname: string): string | null {
   const p = pathname.split('?')[0] || '/';
   if (p === '/messages' || p.startsWith('/messages/') || p === '/approval' || p.startsWith('/approval/')) {
     return '/tasks';
+  }
+  const fromNav = NAV_CHILD_TO_PARENT.get(p);
+  if (fromNav) return fromNav;
+  for (const { childPath, parentPath } of NAV_CHILD_TO_PARENT_ENTRIES) {
+    if (p === childPath || p.startsWith(`${childPath}/`)) {
+      return parentPath;
+    }
   }
   for (const prefix of topMenuPrefixesSorted()) {
     if (pathname === prefix || pathname.startsWith(prefix + '/')) {

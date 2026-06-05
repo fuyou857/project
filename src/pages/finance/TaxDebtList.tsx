@@ -371,7 +371,7 @@ export default function TaxDebtList() {
       <AnimatePresence>
         {showPayModal && selectedInvoice &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowPayModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-800">税金支付</h3>
                 <button onClick={() => setShowPayModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -391,7 +391,7 @@ export default function TaxDebtList() {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-500 mb-1">上传支付凭证 *</label>
-                  <input type="file" ref={voucherInputRef} onChange={handleFileUpload} accept=".jpg,.jpeg,.png,.pdf" multiple className="hidden" />
+                  <input type="file" ref={voucherInputRef} onChange={handleFileUpload} accept=".jpg,.jpeg,.png,.pdf" multiple className="ui-file-input-safe" data-file-upload-field="true" />
                   <div onClick={() => voucherInputRef.current?.click()} className="border-2 border-dashed border-slate-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500">
                     <FaUpload className="mx-auto text-gray-500 mb-2" />
                     <span className="text-gray-500 text-sm">{uploading ? '上传中...' : '点击上传jpg/png/pdf'}</span>
@@ -432,7 +432,7 @@ export default function TaxDebtList() {
       <AnimatePresence>
         {showViewModal && selectedInvoice &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowViewModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-800">支付凭证</h3>
                 <button onClick={() => setShowViewModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>

@@ -88,7 +88,7 @@ export default function ContractAttachmentManager({
               multiple
               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
               onChange={handleLocalFileSelect}
-              className="hidden"
+              className="ui-file-input-safe" data-file-upload-field="true"
               aria-label="选择本地文件上传"
             />
             <button
@@ -160,8 +160,7 @@ export default function ContractAttachmentManager({
           onClick={() => setShowSelector(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[70vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >

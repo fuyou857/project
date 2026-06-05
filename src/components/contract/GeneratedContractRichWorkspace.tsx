@@ -282,12 +282,12 @@ export default function GeneratedContractRichWorkspace({
               下载原 Word
             </button> :
           null}
-          <label className="px-3 py-1.5 text-sm rounded-lg bg-violet-600 text-white cursor-pointer hover:bg-violet-700 disabled:opacity-50 inline-flex items-center gap-1">
+          <label className="px-3 py-1.5 text-sm rounded-lg bg-violet-600 text-white cursor-pointer hover:bg-violet-700 disabled:opacity-50 inline-flex items-center gap-1 relative">
             {genDocxBusy ? '上传中…' : '上传 / 替换 Word'}
             <input
               type="file"
               accept=".docx"
-              className="hidden"
+              className="ui-file-input-overlay" data-file-upload-field="true"
               disabled={genDocxBusy}
               onChange={(e) => {
                 const f = e.target.files?.[0] ?? null;

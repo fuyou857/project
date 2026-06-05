@@ -3,13 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaSearch, FaTrash, FaChartLine, FaFileUpload, FaTimes, FaFilter, FaCheckCircle } from 'react-icons/fa';
 import { supabase } from '../../supabase/client';
 import { SearchableSelect } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 
-const mockProjects = [
-  { id: '1', name: '星河湾小区工程' },
-  { id: '2', name: '市政道路改造' },
-  { id: '3', name: '商业综合体' },
-];
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 const mockMaterials = [
   { id: '1', code: 'MAT001', name: '螺纹钢筋', spec: 'Φ12', unit: '吨', bidQty: 100, bidPrice: 4500, receivedQty: 60 },
@@ -33,6 +32,7 @@ const mockInboundRecords: InboundRecordRow[] = [
 ];
 
 export default function MaterialInbound() {
+  const { options: projectFilterOptions } = useProjectsForSelect({ emptyLabel: '选择项目' });
   const [selectedProject, setSelectedProject] = useState('');
   const [searchText, setSearchText] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -157,11 +157,6 @@ export default function MaterialInbound() {
     return { ...m, avgPrice, diff: avgPrice - m.bidPrice };
   });
 
-  const projectFilterOptions = useMemo(
-    () => projectSelectOptions(mockProjects.map(p => ({ id: p.id, name: p.name })), '选择项目'),
-    [],
-  );
-
   const materialSelectOptions = useMemo(
     () =>
       filteredMaterials.map(m => ({
@@ -193,7 +188,7 @@ export default function MaterialInbound() {
             options={projectFilterOptions}
             placeholder="选择项目"
             emptyLabel="选择项目"
-            searchPlaceholder="搜索项目…"
+            {...PROJECT_SEARCH_PROPS}
             metricsContext="page:material_inbound:filter_project"
           />
         </div>
@@ -251,7 +246,7 @@ export default function MaterialInbound() {
       <AnimatePresence>
         {showAddModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowAddModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">添加入库记录</h3>
                 <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -293,10 +288,10 @@ export default function MaterialInbound() {
                   </div>
                   <div>
                     <label className="block text-gray-500 text-sm mb-2">进货小票 (最多5张)</label>
-                    <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg cursor-pointer hover:bg-gray-500 transition-colors">
+                    <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg cursor-pointer hover:bg-gray-500 transition-colors relative">
                       <FaFileUpload className="text-gray-500" />
                       <span className="text-gray-500 text-sm">上传附件</span>
-                      <input type="file" multiple accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
+                      <input type="file" multiple accept="image/*,.pdf" onChange={handleFileUpload} className="ui-file-input-overlay" data-file-upload-field="true" />
                     </label>
                     {formData.attachments.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -326,7 +321,7 @@ export default function MaterialInbound() {
       <AnimatePresence>
         {showPriceDiffModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowPriceDiffModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">价差分析</h3>
                 <button onClick={() => setShowPriceDiffModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -359,7 +354,7 @@ export default function MaterialInbound() {
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200" onClick={e => e.stopPropagation()}>
               <h3 className="text-lg font-bold text-gray-800 mb-4">确认删除</h3>
               <p className="text-gray-500 mb-6">确定要删除这条入库记录吗？删除后将恢复物料的剩余数量。</p>
               <div className="flex justify-end gap-3">

@@ -411,7 +411,7 @@ export default function TaskDetailPage() {
             type="file"
             accept="image/*"
             capture="environment"
-            className="hidden"
+            className="ui-file-input-safe" data-file-upload-field="true"
             onChange={onCapturePhoto} />
           
             <button

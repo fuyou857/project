@@ -286,7 +286,7 @@ export default function PartyB() {
       <AnimatePresence>
         {showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleClose}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">{editing ? '编辑乙方单位' : '新增乙方单位'}</h3>
                 <button onClick={handleClose} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -376,7 +376,7 @@ export default function PartyB() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-gray-500 mb-2">营业执照</label>
-                    <input type="file" ref={businessInputRef} accept="image/jpeg,image/jpg,image/png,application/pdf" onChange={(e) => handleFileUpload(e, 'business_license_file')} className="hidden" />
+                    <input type="file" ref={businessInputRef} accept="image/jpeg,image/jpg,image/png,application/pdf" onChange={(e) => handleFileUpload(e, 'business_license_file')} className="ui-file-input-safe" data-file-upload-field="true" />
                     {form.business_license_file ?
                   <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
                         {isImage(form.business_license_file) ? <FaImage className="text-blue-400" /> : <FaFile className="text-yellow-400" />}
@@ -391,7 +391,7 @@ export default function PartyB() {
                   </div>
                   <div>
                     <label className="block text-sm text-gray-500 mb-2">开户许可证</label>
-                    <input type="file" ref={accountInputRef} accept="image/jpeg,image/jpg,image/png,application/pdf" onChange={(e) => handleFileUpload(e, 'account_license_file')} className="hidden" />
+                    <input type="file" ref={accountInputRef} accept="image/jpeg,image/jpg,image/png,application/pdf" onChange={(e) => handleFileUpload(e, 'account_license_file')} className="ui-file-input-safe" data-file-upload-field="true" />
                     {form.account_license_file ?
                   <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
                         {isImage(form.account_license_file) ? <FaImage className="text-blue-400" /> : <FaFile className="text-yellow-400" />}
@@ -422,7 +422,7 @@ export default function PartyB() {
       <AnimatePresence>
         {showDeleteConfirm &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-gray-800 mb-4">确认删除</h3>
               <p className="text-gray-700 mb-6">确定删除该乙方单位吗？删除后关联数据将无法引用，请谨慎操作。</p>
               <div className="flex justify-end gap-3">

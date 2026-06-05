@@ -6,8 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaTimes, FaUpload } from 'react-icons/fa';
 import { SearchableSelect } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
-import { useCompanyScope } from '../../hooks/useCompanyScope';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 import { supabase } from '../../supabase/client';
 import {
   createMachineShiftRecord,
@@ -15,6 +14,11 @@ import {
   uploadMachineShiftImage,
 } from './api';
 import type { MachineShiftFormData, RentalContract } from './types';
+
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 interface MachineShiftEntryProps {
   onSuccess?: () => void;
@@ -29,9 +33,11 @@ export default function MachineShiftEntry({
   defaultProjectId,
   defaultDate,
 }: MachineShiftEntryProps) {
-  const { companyIds } = useCompanyScope();
+  const { options: projectOptions } = useProjectsForSelect({
+    activeOnly: true,
+    emptyLabel: '请选择项目',
+  });
   
-  const [projects, setProjects] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
   const [contracts, setContracts] = useState<RentalContract[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,23 +56,6 @@ export default function MachineShiftEntry({
   });
 
   const [uploadingImages, setUploadingImages] = useState(false);
-
-  // 加载项目列表
-  useEffect(() => {
-    async function loadProjects() {
-      if (companyIds.length === 0) return;
-      
-      const { data } = await supabase
-        .from('projects')
-        .select('id, name')
-        .in('company_id', companyIds)
-        .eq('status', 'active')
-        .order('name');
-      
-      if (data) setProjects(data);
-    }
-    loadProjects();
-  }, [companyIds]);
 
   // 加载机械列表
   useEffect(() => {
@@ -141,8 +130,6 @@ export default function MachineShiftEntry({
     // 否则清空
     setFormData(prev => ({ ...prev, cost_per_shift: undefined }));
   }, [formData.rental_contract_id, formData.machine_id, contracts, machines]);
-
-  const projectOptions = useMemo(() => projectSelectOptions(projects), [projects]);
 
   const machineOptions = useMemo(() => [
     { value: '', label: '请选择机械' },
@@ -241,7 +228,7 @@ export default function MachineShiftEntry({
             onChange={(value) => setFormData(prev => ({ ...prev, project_id: value }))}
             options={projectOptions}
             placeholder="选择项目"
-            searchPlaceholder="搜索项目..."
+            {...PROJECT_SEARCH_PROPS}
             className="w-full"
           />
         </div>
@@ -390,7 +377,7 @@ export default function MachineShiftEntry({
           </label>
           
           <div className="flex items-center gap-2 mb-2">
-            <label className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg cursor-pointer transition-colors">
+            <label className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg cursor-pointer transition-colors relative">
               <FaUpload />
               <span>{uploadingImages ? '上传中...' : '上传图片'}</span>
               <input
@@ -399,7 +386,7 @@ export default function MachineShiftEntry({
                 multiple
                 onChange={handleImageUpload}
                 disabled={uploadingImages}
-                className="hidden"
+                className="ui-file-input-overlay" data-file-upload-field="true"
               />
             </label>
             <span className="text-sm text-gray-500">支持 JPG, PNG (最大 12MB)</span>

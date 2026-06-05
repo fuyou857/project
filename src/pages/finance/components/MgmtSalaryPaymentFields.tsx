@@ -319,8 +319,8 @@ export default function MgmtSalaryPaymentFields({ projectId, lines, setLines }: 
           onClick={() => setAdjustModal(null)}>
           
             <motion.div
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl"
             onClick={(e) => e.stopPropagation()}>
             
@@ -354,12 +354,12 @@ export default function MgmtSalaryPaymentFields({ projectId, lines, setLines }: 
               {adjustModal.mode === 'deduction' &&
             <>
                   <label className="block text-sm text-gray-600 mb-1">考核附件 *</label>
-                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 text-gray-600">
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 text-gray-600 relative">
                     <FaUpload />
                     <span>选择文件</span>
                     <input
                   type="file"
-                  className="hidden"
+                  className="ui-file-input-overlay" data-file-upload-field="true"
                   accept=".pdf,.jpg,.jpeg,.png,.gif,application/pdf,image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];

@@ -2,15 +2,14 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaTimes, FaCogs, FaList } from 'react-icons/fa';
 import { SearchableSelect, SegmentedControl } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
-import { fetchMachineShiftRecords, createMachineShiftRecord, updateMachineShiftRecord, deleteMachineShiftRecord, fetchProjectOptions, fetchMachineOptions, fetchContractsByProject } from '../../services/machineShiftService';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
+import { fetchMachineShiftRecords, createMachineShiftRecord, updateMachineShiftRecord, deleteMachineShiftRecord, fetchMachineOptions, fetchContractsByProject } from '../../services/machineShiftService';
 import type { MachineShiftRecord } from '../../services/machineShiftService';
 
-const mockProjects = [
-  { id: '1', name: '星河湾小区工程' },
-  { id: '2', name: '市政道路改造' },
-  { id: '3', name: '商业综合体' },
-];
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 const mockSuppliers = [
   { id: '1', name: '建筑机械租赁公司' },
@@ -26,6 +25,8 @@ const mockEquipment = [
 type TabType = 'list' | 'shift';
 
 export default function EquipmentList() {
+  const { filterOptions: projectFilterOptions, options: projectFormSelectOptions, getProjectName } =
+    useProjectsForSelect({ filterEmptyLabel: '全部项目', emptyLabel: '公司自有' });
   const [activeTab, setActiveTab] = useState<TabType>('list');
   const [selectedProject, setSelectedProject] = useState('');
   const [searchText, setSearchText] = useState('');
@@ -53,7 +54,6 @@ export default function EquipmentList() {
     operator: '',
     remark: ''
   });
-  const [projectOptions, setProjectOptions] = useState<{ value: string; label: string }[]>([]);
   const [machineOptions, setMachineOptions] = useState<{ value: string; label: string }[]>([]);
   const [contractOptions, setContractOptions] = useState<{ value: string; label: string }[]>([]);
   const [savingShift, setSavingShift] = useState(false);
@@ -91,15 +91,6 @@ export default function EquipmentList() {
     }
   };
 
-  const loadProjectOptions = async () => {
-    try {
-      const options = await fetchProjectOptions();
-      setProjectOptions(options);
-    } catch (err) {
-      console.error('Failed to load project options:', err);
-    }
-  };
-
   const loadMachineOptions = async (projectId?: string) => {
     try {
       const options = await fetchMachineOptions(projectId);
@@ -121,7 +112,7 @@ export default function EquipmentList() {
   const handleTabChange = async (tab: TabType) => {
     setActiveTab(tab);
     if (tab === 'shift') {
-      await Promise.all([loadShiftRecords(), loadProjectOptions()]);
+      await loadShiftRecords();
     }
   };
 
@@ -281,14 +272,6 @@ export default function EquipmentList() {
     rejected: { label: '已驳回', color: 'text-red-400' }
   };
 
-  const projectFilterOptions = useMemo(
-    () => projectSelectOptions(mockProjects.map(p => ({ id: p.id, name: p.name })), '全部项目'),
-    [],
-  );
-  const formProjectOptions = useMemo(
-    () => projectSelectOptions(mockProjects.map(p => ({ id: p.id, name: p.name })), '公司自有'),
-    [],
-  );
   const supplierOptions = useMemo(
     () => [{ value: '', label: '请选择' }, ...mockSuppliers.map(s => ({ value: s.id, label: s.name }))],
     [],
@@ -318,7 +301,7 @@ export default function EquipmentList() {
                 options={projectFilterOptions}
                 placeholder="全部项目"
                 emptyLabel="全部项目"
-                searchPlaceholder="搜索项目…"
+                {...PROJECT_SEARCH_PROPS}
                 metricsContext="page:equipment_list:filter_project"
                 className="min-w-[12rem]"
               />
@@ -338,10 +321,10 @@ export default function EquipmentList() {
               <SearchableSelect
                 value={shiftFilterProject}
                 onChange={(v) => { setShiftFilterProject(v); }}
-                options={projectOptions}
+                options={projectFilterOptions}
                 placeholder="全部项目"
                 emptyLabel="全部项目"
-                searchPlaceholder="搜索项目…"
+                {...PROJECT_SEARCH_PROPS}
                 metricsContext="page:equipment_shift:filter_project"
                 className="min-w-[12rem]"
               />
@@ -388,7 +371,7 @@ export default function EquipmentList() {
                   <td className="px-4 py-3 text-gray-800 font-medium">{e.name}</td>
                   <td className="px-4 py-3">{e.spec}</td>
                   <td className="px-4 py-3 text-center">{e.unit}</td>
-                  <td className="px-4 py-3">{mockProjects.find(p => p.id === e.projectId)?.name || '-'}</td>
+                  <td className="px-4 py-3">{e.projectId ? getProjectName(e.projectId) : '-'}</td>
                   <td className="px-4 py-3">{mockSuppliers.find(s => s.id === e.supplierId)?.name || '-'}</td>
                   <td className="px-4 py-3">{e.date}</td>
                   <td className={`px-4 py-3 text-center ${statusColor[e.status]}`}>{statusMap[e.status]}</td>
@@ -477,7 +460,7 @@ export default function EquipmentList() {
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={(e) => { e.stopPropagation(); }}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">{editId ? '编辑机械' : '新增机械'}</h3>
                 <button onClick={(e) => { e.stopPropagation(); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -519,7 +502,7 @@ export default function EquipmentList() {
                     <SearchableSelect
                       value={formData.projectId}
                       onChange={v => setFormData({ ...formData, projectId: v })}
-                      options={formProjectOptions}
+                      options={projectFormSelectOptions}
                       placeholder="公司自有"
                       emptyLabel="公司自有"
                       searchPlaceholder="搜索项目…"
@@ -576,7 +559,7 @@ export default function EquipmentList() {
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200">
               <h4 className="text-lg font-bold text-gray-800 mb-2">确认删除</h4>
               <p className="text-gray-500 mb-6">确定要删除该机械吗？此操作不可恢复。</p>
               <div className="flex justify-end gap-3">
@@ -591,7 +574,7 @@ export default function EquipmentList() {
       <AnimatePresence>
         {showShiftModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={(e) => { e.stopPropagation(); }}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">{editShiftId ? '编辑台班' : '录入台班'}</h3>
                 <button onClick={(e) => { e.stopPropagation(); setShowShiftModal(false); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -603,10 +586,10 @@ export default function EquipmentList() {
                     <SearchableSelect
                       value={shiftFormData.project_id}
                       onChange={handleProjectChange}
-                      options={projectOptions}
+                      options={projectFormSelectOptions}
                       placeholder="请选择项目"
                       emptyLabel="无项目"
-                      searchPlaceholder="搜索项目…"
+                      {...PROJECT_SEARCH_PROPS}
                       metricsContext="page:equipment_shift:form_project"
                     />
                   </div>

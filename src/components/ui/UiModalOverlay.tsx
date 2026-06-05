@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
@@ -46,24 +46,13 @@ export default function UiModalOverlay({
   showCloseButton = true,
   interactionReady: interactionReadyProp,
 }: Props) {
-  const [exiting, setExiting] = useState(false);
-  const visible = open || exiting;
   const internalReady = useModalInteractionGuard(open);
   const interactionReady = interactionReadyProp ?? internalReady;
-  const contentInteractive = open && interactionReady && !exiting;
+  const contentInteractive = open && interactionReady;
 
   useBodyScrollLock(open);
 
-  useEffect(() => {
-    if (open) {
-      setExiting(false);
-    } else {
-      setExiting(true);
-    }
-  }, [open]);
-
   const requestClose = useCallback(() => {
-    setExiting(true);
     safeInvokeClose(onClose);
   }, [onClose]);
 
@@ -93,7 +82,6 @@ export default function UiModalOverlay({
   }, [open, requestClose]);
 
   const handleExitComplete = useCallback(() => {
-    setExiting(false);
     resetBodyInteractionLock();
   }, []);
 
@@ -103,7 +91,7 @@ export default function UiModalOverlay({
 
   return createPortal(
     <AnimatePresence initial={false} onExitComplete={handleExitComplete}>
-      {visible ? (
+      {open ? (
         <motion.div
           key="ui-modal-overlay"
           role="presentation"
@@ -117,16 +105,16 @@ export default function UiModalOverlay({
           <motion.div
             role="presentation"
             aria-hidden
-            className="absolute inset-0 bg-black/50 cursor-pointer"
+            className="absolute right-0 bottom-0 w-full h-full bg-black/50 cursor-pointer"
             onPointerDown={handleBackdropClose}
             onClick={handleBackdropClose}
           />
           <motion.div
             role="dialog"
             aria-modal="true"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             className={`relative z-10 max-h-[95vh] w-full cursor-default ${panelClassName}`}
             onPointerDown={(e) => e.stopPropagation()}

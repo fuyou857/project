@@ -681,9 +681,7 @@ const FixedAssetManagement: React.FC = () => {
           onClick={() => setShowAssetModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="bg-white rounded-xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-gray-200"
             onClick={e => e.stopPropagation()}
           >
@@ -882,8 +880,7 @@ const FixedAssetManagement: React.FC = () => {
           onClick={() => setShowAllocationModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-md border border-gray-200"
             onClick={e => e.stopPropagation()}
           >
@@ -970,8 +967,7 @@ const FixedAssetManagement: React.FC = () => {
           onClick={() => setShowTransferModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-md border border-gray-200"
             onClick={e => e.stopPropagation()}
           >
@@ -1068,8 +1064,7 @@ const FixedAssetManagement: React.FC = () => {
           onClick={() => setShowScrapModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-md border border-gray-200"
             onClick={e => e.stopPropagation()}
           >
@@ -1163,8 +1158,7 @@ const FixedAssetManagement: React.FC = () => {
           onClick={() => setShowCategoryModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-md border border-gray-200"
             onClick={e => e.stopPropagation()}
           >

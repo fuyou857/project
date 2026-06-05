@@ -280,7 +280,7 @@ export default function SealManagement() {
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-800">用章信息录入</h3><button onClick={(e) => { e.stopPropagation(); setShowModal(false); setForm(initialForm); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -329,7 +329,7 @@ export default function SealManagement() {
                 <div><label className="block text-sm text-gray-500 mb-2">借章人姓名</label><input type="text" value={form.borrower_name} onChange={e => setForm({ ...form, borrower_name: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" placeholder="请输入借章人姓名" /></div>
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">借章人身份证（附件）*</label>
-                  <input type="file" ref={idCardInputRef} accept="image/jpeg,image/jpg,image/png,image/gif,application/pdf" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], true)} className="hidden" />
+                  <input type="file" ref={idCardInputRef} accept="image/jpeg,image/jpg,image/png,image/gif,application/pdf" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], true)} className="ui-file-input-safe" data-file-upload-field="true" />
                   <div className="space-y-2">
                     {form.borrower_id_card_file ? (
                       <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
@@ -343,7 +343,7 @@ export default function SealManagement() {
                 {form.usage_type === '印章外借' && <div><label className="block text-sm text-gray-500 mb-2">预计归还时间 *</label><input type="datetime-local" required value={form.expected_return_date} onChange={e => setForm({ ...form, expected_return_date: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>}
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">盖章文件/借条证明文件 *（支持多文件）</label>
-                  <input type="file" ref={fileInputRef} accept="image/jpeg,image/jpg,image/png,image/gif,application/pdf" multiple onChange={e => { if (e.target.files) { Array.from(e.target.files).forEach(file => handleFileUpload(file, false)); } }} className="hidden" />
+                  <input type="file" ref={fileInputRef} accept="image/jpeg,image/jpg,image/png,image/gif,application/pdf" multiple onChange={e => { if (e.target.files) { Array.from(e.target.files).forEach(file => handleFileUpload(file, false)); } }} className="ui-file-input-safe" data-file-upload-field="true" />
                   <div className="space-y-2">
                     {form.attachment_files.length > 0 && <div className="space-y-2">{form.attachment_files.map((url, idx) => renderFilePreview(url, idx))}</div>}
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={fileUploading} className="w-full px-4 py-2 bg-gray-500 hover:bg-slate-500 text-gray-800 rounded-lg flex items-center justify-center gap-2">{fileUploading ? '上传中...' : <><FaPaperclip /> 上传文件（jpg/png/pdf，可多选）</>}</button>
@@ -359,7 +359,7 @@ export default function SealManagement() {
       <AnimatePresence>
         {showConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowConfirm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-gray-800 mb-4">确认归还销号</h3><p className="text-gray-700 mb-6">确认章已归还？此操作将移除外借记录并归档到历史记录。</p>
               <div className="flex justify-end gap-3"><button onClick={() => setShowConfirm(false)} className="px-4 py-2 bg-gray-500 text-gray-800 rounded-lg">取消</button><button onClick={confirmReturn} className="px-4 py-2 bg-green-600 text-gray-800 rounded-lg">确认归还</button></div>
             </motion.div>
@@ -370,7 +370,7 @@ export default function SealManagement() {
       <AnimatePresence>
         {showSuccess && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowSuccess(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
               <div className="text-center"><div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><FaCheck className="w-8 h-8 text-gray-800" /></div><h3 className="text-xl font-bold text-gray-800 mb-2">用章申请已提交</h3><p className="text-gray-700 mb-6">您的用章申请已成功提交</p><button onClick={() => setShowSuccess(false)} className="px-6 py-2 bg-blue-600 text-gray-800 rounded-lg">确定</button></div>
             </motion.div>
           </motion.div>
@@ -380,7 +380,7 @@ export default function SealManagement() {
       <AnimatePresence>
         {showPreview && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-8" onClick={() => setShowPreview(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-4 max-w-4xl max-h-full overflow-auto" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-4 max-w-4xl max-h-full overflow-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-gray-800 font-medium">附件预览</h3><button onClick={() => setShowPreview(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               {isImage(previewUrl) ? <img src={previewUrl} alt="preview" className="max-w-full max-h-[70vh] object-contain" /> : <iframe src={previewUrl} className="w-[800px] h-[70vh]" title="preview" />}
             </motion.div>

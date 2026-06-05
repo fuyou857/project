@@ -389,7 +389,7 @@ export default function IncomeInvoiceList() {
       <AnimatePresence>
         {showDetail && detailInvoice &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowDetail(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto shadow-lg" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-gray-800">发票详情</h3><button onClick={() => setShowDetail(false)} className="text-gray-400 hover:text-gray-600"><FaTimes /></button></div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-gray-500">项目：</span><span className="text-gray-800">{detailInvoice.project_name}</span></div>
@@ -453,7 +453,7 @@ export default function IncomeInvoiceList() {
       <AnimatePresence>
         {showEdit && editForm &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowEdit(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto shadow-lg" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-gray-800">编辑发票</h3><button onClick={() => setShowEdit(false)} className="text-gray-400 hover:text-gray-600"><FaTimes /></button></div>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">

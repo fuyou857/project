@@ -1,9 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCloudUploadAlt, FaChevronLeft, FaChevronRight, FaFilePdf, FaImage, FaFileAlt } from 'react-icons/fa';
-import { useSafeFileInput } from '../../../hooks/useSafeFileInput';
 import { COST_INVOICE_ACCEPT, type OcrUiStatus, type InvoiceAttachmentItem } from '../costInvoice/types';
 import { isInvoiceImageMime, isInvoicePdfMime } from '../costInvoice/invoiceFileUtils';
+
+export const INVOICE_UPLOAD_INPUT_ATTR = 'data-file-upload-field';
 
 type Props = {
   attachments: InvoiceAttachmentItem[];
@@ -26,107 +27,101 @@ export default function InvoicePreviewPanel_v2({
   progressLabel,
   disabled
 }: Props) {
-  const { inputRef, inputId, triggerRef, openPicker, onInputChange } = useSafeFileInput({
-    disabled,
-    accept: COST_INVOICE_ACCEPT,
-    multiple: true,
-    onFiles
-  });
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const current = attachments[activeIndex];
+  const showProgressOverlay = ocrStatus === 'pending' || progress > 0;
+  const fileInputInteractive = !disabled && !showProgressOverlay;
+
+  const handleFilesSelected = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files;
+    if (list?.length) onFiles(Array.from(list));
+    e.target.value = '';
+  }, [onFiles]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (disabled) return;
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) onFiles(files);
   }, [disabled, onFiles]);
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (disabled) return;
-
+  const handleBrowseClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    try {
-      openPicker(e);
-    } catch (err) {
-      console.error('[InvoiceUpload] openPicker failed:', err);
-    }
-
-    // 直接回退：无论 openPicker 是否成功，都尝试直接点击 input
-    const input = inputRef.current;
-    if (input && !input.disabled) {
-      try {
-        input.click();
-      } catch (fallbackErr) {
-        console.error('[InvoiceUpload] fallback input.click() also failed:', fallbackErr);
-      }
-    }
-  }, [disabled, openPicker, inputRef]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      try {
-        openPicker();
-      } catch (err) {
-        console.error('[InvoiceUpload] openPicker (keyboard) failed:', err);
-
-        const input = inputRef.current;
-        if (input && !input.disabled) {
-          input.click();
-        }
-      }
-    }
-  }, [disabled, openPicker, inputRef]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onInputChange(e);
-  }, [onInputChange]);
+    if (!fileInputInteractive) return;
+    inputRef.current?.click();
+  }, [fileInputInteractive]);
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      {/* Upload Area */}
-      <motion.div
-        ref={triggerRef}
-        className={`relative rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-6 text-center ${
-          disabled ? 'bg-slate-50 border-slate-200 cursor-not-allowed' : 'bg-white border-blue-200 hover:border-blue-500 hover:shadow-md cursor-pointer group'
+      {/* label + 始终挂载的 file input；勿条件卸载，否则调试/点击均失效 */}
+      <label
+        htmlFor={fileInputInteractive ? inputId : undefined}
+        className={`relative block min-h-[150px] w-full overflow-visible rounded-2xl border-2 border-dashed transition-all p-6 text-center ${
+          disabled
+            ? 'bg-slate-50 border-slate-200 cursor-not-allowed'
+            : 'bg-white border-blue-200 hover:border-blue-500 hover:shadow-md cursor-pointer group'
         }`}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
         aria-label={disabled ? undefined : '点击或拖拽上传发票文件'}
         aria-disabled={disabled || undefined}
         onDragOver={(e: React.DragEvent) => e.preventDefault()}
         onDrop={handleDrop}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
       >
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
-          disabled ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
-        }`}>
-          <FaCloudUploadAlt size={24} />
-        </div>
-        
-        <div className="space-y-1">
-          <p className={`text-sm font-bold ${disabled ? 'text-slate-400' : 'text-slate-700'}`}>
-            点击或拖拽上传发票
-          </p>
-          <p className="text-[10px] text-slate-400">
-            支持 JPG, PNG, PDF, OFD (最大 12MB)
-          </p>
+        <input
+          ref={inputRef}
+          id={inputId}
+          data-file-upload-field="true"
+          type="file"
+          accept={COST_INVOICE_ACCEPT}
+          multiple
+          disabled={!fileInputInteractive}
+          onChange={handleFilesSelected}
+          className="ui-file-input-overlay min-h-[150px]"
+          aria-hidden
+          tabIndex={-1}
+        />
+
+        <div className="pointer-events-none flex flex-col items-center justify-center">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
+            disabled ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
+          }`}>
+            <FaCloudUploadAlt size={24} />
+          </div>
+
+          <div className="space-y-1">
+            <p className={`text-sm font-bold ${disabled ? 'text-slate-400' : 'text-slate-700'}`}>
+              点击或拖拽上传发票
+            </p>
+            <p className="text-[10px] text-slate-400">
+              支持 JPG, PNG, PDF, OFD (最大 12MB)
+            </p>
+          </div>
+
+          {fileInputInteractive && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={handleBrowseClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleBrowseClick(e as unknown as React.MouseEvent);
+              }}
+              className="pointer-events-auto mt-3 px-4 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+            >
+              浏览文件
+            </span>
+          )}
         </div>
 
-        {/* Progress Overlay */}
         <AnimatePresence>
-          {(ocrStatus === 'pending' || progress > 0) && (
+          {showProgressOverlay && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-white/90 rounded-2xl flex flex-col items-center justify-center p-6"
+              className="absolute inset-0 z-30 bg-white/90 rounded-2xl flex flex-col items-center justify-center p-6 pointer-events-auto"
             >
               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
                 <motion.div
@@ -139,22 +134,8 @@ export default function InvoicePreviewPanel_v2({
             </motion.div>
           )}
         </AnimatePresence>
+      </label>
 
-        {/* Hidden file input - must be rendered in DOM for the picker to work */}
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="file"
-          accept={COST_INVOICE_ACCEPT}
-          multiple
-          disabled={disabled}
-          onChange={handleInputChange}
-          className="hidden"
-          tabIndex={-1}
-        />
-      </motion.div>
-
-      {/* Preview Area */}
       <div className="flex-1 bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-800 shadow-inner">
         {current ? (
           <div className="w-full h-full flex flex-col">
@@ -173,8 +154,7 @@ export default function InvoicePreviewPanel_v2({
                 </div>
               )}
             </div>
-            
-            {/* Attachment Nav */}
+
             {attachments.length > 1 && (
               <div className="bg-slate-800/80 backdrop-blur-sm px-4 py-2 flex items-center justify-between text-white text-xs">
                 <button
@@ -210,11 +190,10 @@ export default function InvoicePreviewPanel_v2({
         )}
       </div>
 
-      {/* Footer Info */}
       <div className="px-1 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${
-            ocrStatus === 'success' ? 'bg-emerald-500 animate-pulse' : 
+            ocrStatus === 'success' ? 'bg-emerald-500 animate-pulse' :
             ocrStatus === 'failed' ? 'bg-red-500' : 'bg-slate-300'
           }`} />
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">

@@ -91,7 +91,7 @@ function TopNav({
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   const pathname = location.pathname;
-  const isActive = (path: string) => pathname.startsWith(path);
+  const isActive = (path: string) => resolveMenuParentPath(pathname) === path;
   const { tableDensity, setTableDensity } = useUiPreferences();
 
   const getFirstChildPath = (item: NavMenuItem): string => {

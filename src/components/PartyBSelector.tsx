@@ -243,7 +243,7 @@ function QuickAddPartyBModal({
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
-              className="hidden"
+              className="ui-file-input-safe" data-file-upload-field="true"
               id="businessLicense"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -265,7 +265,7 @@ function QuickAddPartyBModal({
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
-              className="hidden"
+              className="ui-file-input-safe" data-file-upload-field="true"
               id="bankLicense"
               onChange={(e) => {
                 const file = e.target.files?.[0];

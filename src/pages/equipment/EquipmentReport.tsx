@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SearchableSelect } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaFileUpload, FaTimes, FaFilter } from 'react-icons/fa';
 
-const mockProjects = [
-  { id: '1', name: '星河湾小区工程' },
-  { id: '2', name: '市政道路改造' },
-  { id: '3', name: '商业综合体' },
-];
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 const mockEquipment = [
   { id: '1', code: 'EQ001', name: '挖掘机' },
@@ -46,6 +45,9 @@ type EquipmentFormState = {
 };
 
 export default function EquipmentReport() {
+  const { filterOptions: projectFilterOptions, projects, getProjectName } = useProjectsForSelect({
+    filterEmptyLabel: '全部项目',
+  });
   const [selectedProject, setSelectedProject] = useState('');
   const [searchText, setSearchText] = useState('');
   const [showFilter, setShowFilter] = useState(false);
@@ -116,13 +118,12 @@ export default function EquipmentReport() {
 
   const totalAmount = filteredReports.reduce((sum, r) => sum + r.total, 0);
 
-  const projectFilterOptions = useMemo(
-    () => projectSelectOptions(mockProjects.map(p => ({ id: p.id, name: p.name })), '全部项目'),
-    [],
-  );
   const formProjectOptions = useMemo(
-    () => mockProjects.map(p => ({ value: p.id, label: p.name })),
-    [],
+    () => projects.map(p => ({
+      value: p.id,
+      label: p.project_code ? `[${p.project_code}] ${p.name}` : p.name,
+    })),
+    [projects],
   );
   const equipmentOptions = useMemo(
     () => mockEquipment.map(e => ({ value: e.id, label: e.name })),
@@ -146,7 +147,7 @@ export default function EquipmentReport() {
             options={projectFilterOptions}
             placeholder="全部项目"
             emptyLabel="全部项目"
-            searchPlaceholder="搜索项目…"
+            {...PROJECT_SEARCH_PROPS}
             metricsContext="page:equipment_report:filter_project"
           />
         </div>
@@ -188,7 +189,7 @@ export default function EquipmentReport() {
           <tbody>
             {filteredReports.map(r => (
               <tr key={r.id} className="border-t border-gray-200 text-gray-700 hover:bg-gray-50/50">
-                <td className="px-4 py-3">{mockProjects.find(p => p.id === r.projectId)?.name}</td>
+                <td className="px-4 py-3">{getProjectName(r.projectId)}</td>
                 <td className="px-4 py-3 text-gray-800 font-medium">{mockEquipment.find(e => e.id === r.equipmentId)?.name}</td>
                 <td className="px-4 py-3">{r.date}</td>
                 <td className="px-4 py-3 text-right">{r.shiftCount}</td>
@@ -216,7 +217,7 @@ export default function EquipmentReport() {
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={(e) => { e.stopPropagation(); }}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">{editId ? '编辑上报' : '新增上报'}</h3>
                 <button onClick={(e) => { e.stopPropagation(); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -232,7 +233,7 @@ export default function EquipmentReport() {
                       onChange={v => setFormData({ ...formData, projectId: v })}
                       options={formProjectOptions}
                       placeholder="请选择"
-                      searchPlaceholder="搜索项目…"
+                      {...PROJECT_SEARCH_PROPS}
                       metricsContext="page:equipment_report:form_project"
                     />
                   </div>
@@ -272,10 +273,10 @@ export default function EquipmentReport() {
                 </div>
                 <div>
                   <label className="block text-gray-500 text-sm mb-2">台班确认表 (最多5张)</label>
-                  <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg cursor-pointer hover:bg-gray-500">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg cursor-pointer hover:bg-gray-500 relative">
                     <FaFileUpload className="text-gray-500" />
                     <span className="text-gray-500 text-sm">上传附件</span>
-                    <input type="file" multiple accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
+                    <input type="file" multiple accept="image/*,.pdf" onChange={handleFileUpload} className="ui-file-input-overlay" data-file-upload-field="true" />
                   </label>
                   {formData.attachments.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -302,7 +303,7 @@ export default function EquipmentReport() {
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200">
               <h4 className="text-lg font-bold text-gray-800 mb-2">确认删除</h4>
               <p className="text-gray-500 mb-6">确定要删除该上报记录吗？</p>
               <div className="flex justify-end gap-3">

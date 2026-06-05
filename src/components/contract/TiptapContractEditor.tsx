@@ -143,7 +143,7 @@ const TiptapContractEditor = forwardRef<TiptapContractEditorHandle, Props>(funct
         >
           图片
         </button>
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
+        <input ref={fileInputRef} type="file" accept="image/*" className="ui-file-input-safe" data-file-upload-field="true" onChange={onPickImage} />
       </div>
       <EditorContent editor={editor} className="max-h-[min(50vh,420px)] overflow-y-auto" />
     </div>

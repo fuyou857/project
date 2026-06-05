@@ -6,8 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaTimes, FaCheck, FaClock } from 'react-icons/fa';
 import { SearchableSelect, SegmentedControl, UiModalOverlay as Modal } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
-import { useCompanyScope } from '../../hooks/useCompanyScope';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 import { supabase } from '../../supabase/client';
 import {
   fetchMachineShiftRecords,
@@ -18,11 +17,18 @@ import MachineShiftEntry from './MachineShiftEntry';
 import DrillDownModal from './DrillDownModal';
 import type { MachineShiftRecord, MachineShiftFilter } from './types';
 
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
+
 export default function MachineShiftList() {
-  const { companyIds } = useCompanyScope();
+  const { filterOptions: projectFilterOptions } = useProjectsForSelect({
+    activeOnly: true,
+    filterEmptyLabel: '全部项目',
+  });
   
   const [records, setRecords] = useState<MachineShiftRecord[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -43,23 +49,6 @@ export default function MachineShiftList() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showDrillDown, setShowDrillDown] = useState(false);
   const [drillDownParams, setDrillDownParams] = useState<MachineShiftFilter>({});
-
-  // 加载项目列表
-  useEffect(() => {
-    async function loadProjects() {
-      if (companyIds.length === 0) return;
-      
-      const { data } = await supabase
-        .from('projects')
-        .select('id, name')
-        .in('company_id', companyIds)
-        .eq('status', 'active')
-        .order('name');
-      
-      if (data) setProjects(data);
-    }
-    loadProjects();
-  }, [companyIds]);
 
   // 加载机械列表
   useEffect(() => {
@@ -114,10 +103,7 @@ export default function MachineShiftList() {
   }, [filter]);
 
   // 筛选选项
-  const projectOptions = useMemo(() => [
-    { value: '', label: '全部项目' },
-    ...projectSelectOptions(projects),
-  ], [projects]);
+  const projectOptions = projectFilterOptions;
 
   const machineOptions = useMemo(() => [
     { value: '', label: '全部机械' },
@@ -195,7 +181,7 @@ export default function MachineShiftList() {
               onChange={(value) => setFilter(prev => ({ ...prev, projectId: value || undefined }))}
               options={projectOptions}
               placeholder="选择项目"
-              searchPlaceholder="搜索项目..."
+              {...PROJECT_SEARCH_PROPS}
               emptyLabel="全部项目"
               className="min-w-[200px]"
             />

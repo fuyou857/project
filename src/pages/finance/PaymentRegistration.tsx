@@ -900,7 +900,7 @@ export default function PaymentRegistration() {
       <AnimatePresence>
         {(showModal === 'apply' || showModal === 'edit') &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => {setShowModal(null);setSelectedRequest(null);setStaffLines([]);}}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">{showModal === 'apply' ? '工程款支付申请' : '编辑付款申请'}</h3>
                 <button onClick={() => {setShowModal(null);setSelectedRequest(null);setStaffLines([]);}} className="text-gray-500 hover:text-gray-800 transition-colors"><FaTimes className="w-5 h-5" /></button>
@@ -1112,7 +1112,7 @@ export default function PaymentRegistration() {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer" onClick={() => document.getElementById('attachment-input')?.click()}>
                     <FaFileAlt className="mx-auto text-gray-400 mb-2" />
                     <p className="text-sm text-gray-500">点击或拖拽上传附件</p>
-                    <input id="attachment-input" type="file" className="hidden" onChange={(e) => {
+                    <input id="attachment-input" type="file" className="ui-file-input-safe" data-file-upload-field="true" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
                       setForm({ ...form, attachment_url: file.name });
@@ -1140,7 +1140,7 @@ export default function PaymentRegistration() {
       <AnimatePresence>
         {showModal === 'confirm' && selectedRequest &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => {setShowModal(null);setSelectedRequest(null);setStaffLines([]);}}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">确认支付</h3>
                 <button onClick={() => {setShowModal(null);setSelectedRequest(null);setStaffLines([]);}} className="text-gray-500 hover:text-gray-800 transition-colors"><FaTimes className="w-5 h-5" /></button>
@@ -1181,7 +1181,7 @@ export default function PaymentRegistration() {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer" onClick={() => document.getElementById('voucher-input')?.click()}>
                     <FaFileImage className="mx-auto text-gray-400 mb-2" />
                     <p className="text-sm text-gray-500">点击或拖拽上传支付凭证（支持图片/PDF）</p>
-                    <input id="voucher-input" type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => {
+                    <input id="voucher-input" type="file" accept="image/*,.pdf" className="ui-file-input-safe" data-file-upload-field="true" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
                       setConfirmForm({ ...confirmForm, payment_voucher_url: file.name });
@@ -1219,7 +1219,7 @@ export default function PaymentRegistration() {
       <AnimatePresence>
         {selectedRequest && activeTab === 'completed' && showModal !== 'confirm' && !showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedRequest(null)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">付款详情</h3>
                 <button onClick={() => setSelectedRequest(null)} className="text-gray-500 hover:text-gray-800 transition-colors"><FaTimes className="w-5 h-5" /></button>
@@ -1286,7 +1286,7 @@ export default function PaymentRegistration() {
       <AnimatePresence>
         {deleteConfirm.show &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200">
               <h3 className="text-xl font-bold text-gray-800 mb-4">确认删除</h3>
               <p className="text-gray-700 mb-6">确定要删除付款申请「{deleteConfirm.name}」吗？此操作不可撤销。</p>
               <div className="flex justify-end gap-3">
@@ -1301,7 +1301,7 @@ export default function PaymentRegistration() {
       <AnimatePresence>
         {showAddSupplierModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAddSupplierModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">新增乙方单位</h3>
                 <button onClick={() => setShowAddSupplierModal(false)} className="text-gray-500 hover:text-gray-800 transition-colors"><FaTimes className="w-5 h-5" /></button>

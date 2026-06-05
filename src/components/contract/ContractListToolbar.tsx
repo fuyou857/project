@@ -62,7 +62,7 @@ export default function ContractListToolbar({
           ref={fileInputRef}
           accept=".xlsx,.xls"
           onChange={onImport}
-          className="hidden"
+          className="ui-file-input-safe" data-file-upload-field="true"
           aria-label="选择 Excel 文件导入"
         />
         <ToolbarButton

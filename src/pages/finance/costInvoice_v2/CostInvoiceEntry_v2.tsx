@@ -10,7 +10,6 @@ import { useInvoiceSubmit } from './useInvoiceSubmit';
 import CostInvoiceEntryWorkspace_v2 from './CostInvoiceEntryWorkspace_v2';
 import UiModalOverlay from '../../../components/ui/UiModalOverlay';
 import { useModalInteractionGuard } from '../../../hooks/useModalInteractionGuard';
-import { useBodyScrollLock } from '../../../hooks/useBodyScrollLock';
 import { projectSelectOptions } from '../../../components/ui/options';
 import { type PartyBRow } from '../costInvoice/sellerPartyBSync';
 import { type CostInvoiceForm } from '../costInvoice/types';
@@ -58,7 +57,6 @@ export default function CostInvoiceEntry_v2() {
     handleSuccess
   );
 
-  useBodyScrollLock(showModal);
   const interactionReady = useModalInteractionGuard(showModal);
 
   useEffect(() => {
@@ -121,16 +119,10 @@ export default function CostInvoiceEntry_v2() {
   }, [resetForm, clearWarnings, setForm]);
 
   const handleClose = useCallback(() => {
-    console.log('[DEBUG] handleClose called, ocrStatus:', ocr.ocrUiStatus);
     try {
-      if (ocr.ocrUiStatus === 'pending') {
-        console.log('[DEBUG] OCR pending, showing confirm');
-        if (!window.confirm('识别正在进行中，确定要关闭吗？')) {
-          console.log('[DEBUG] User cancelled close');
-          return;
-        }
+      if (ocr.ocrUiStatus === 'pending' && !window.confirm('识别正在进行中，确定要关闭吗？')) {
+        return;
       }
-      console.log('[DEBUG] Closing modal');
       setShowModal(false);
       resetForm();
       resetBodyInteractionLock();
@@ -140,7 +132,7 @@ export default function CostInvoiceEntry_v2() {
       resetForm();
       resetBodyInteractionLock();
     }
-  }, [ocr, resetForm]);
+  }, [resetForm, ocr.ocrUiStatus]);
 
   const handleSubmitWithState = useCallback(async (e: React.FormEvent) => {
     setSubmitting(true);
@@ -188,28 +180,30 @@ export default function CostInvoiceEntry_v2() {
 
       <CostInvoiceList embedded />
 
-      <UiModalOverlay
-        open={showModal}
-        onClose={handleClose}
-        showCloseButton={false}
-        panelClassName="bg-white rounded-xl p-0 w-full max-w-[min(96vw,1400px)] max-h-[95vh] overflow-hidden shadow-2xl"
-      >
-        <CostInvoiceEntryWorkspace_v2
-          form={form}
-          setForm={setForm}
-          editing={!!editingId}
-          submitting={submitting}
-          projectOptions={projectOptions}
-          supplierOptions={supplierOptions}
-          supplierSyncWarnings={warnings}
-          ocr={ocr}
-          uploadFile={uploadFile}
-          onSubmit={handleSubmitWithState}
+      {showModal ? (
+        <UiModalOverlay
+          open
           onClose={handleClose}
-          onProjectChange={handleProjectChange}
-          interactionReady={interactionReady}
-        />
-      </UiModalOverlay>
+          showCloseButton={false}
+          panelClassName="bg-white rounded-xl p-0 w-full max-w-[min(96vw,1400px)] max-h-[95vh] overflow-y-auto shadow-2xl"
+        >
+          <CostInvoiceEntryWorkspace_v2
+            form={form}
+            setForm={setForm}
+            editing={!!editingId}
+            submitting={submitting}
+            projectOptions={projectOptions}
+            supplierOptions={supplierOptions}
+            supplierSyncWarnings={warnings}
+            ocr={ocr}
+            uploadFile={uploadFile}
+            onSubmit={handleSubmitWithState}
+            onClose={handleClose}
+            onProjectChange={handleProjectChange}
+            interactionReady={interactionReady}
+          />
+        </UiModalOverlay>
+      ) : null}
     </motion.div>
   );
 }

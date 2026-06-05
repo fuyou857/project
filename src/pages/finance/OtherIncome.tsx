@@ -322,7 +322,7 @@ export default function OtherIncome() {
       <AnimatePresence>
         {showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">{editing ? '编辑其他收入' : '新增其他收入'}</h3>
                 <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -358,7 +358,7 @@ export default function OtherIncome() {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">进账凭证</label>
-                  <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleUpload} className="hidden" />
+                  <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleUpload} className="ui-file-input-safe" data-file-upload-field="true" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-gray-800 rounded-lg mb-2"><FaUpload /> 上传凭证</button>
                   {form.voucher_images.length > 0 &&
                 <div className="flex flex-wrap gap-2">
@@ -384,7 +384,7 @@ export default function OtherIncome() {
       <AnimatePresence>
         {deleteConfirm.show &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-sm">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-sm">
               <h3 className="text-xl font-bold text-gray-800 mb-4">确认删除</h3>
               <p className="text-gray-700 mb-6">确定要删除该记录吗？</p>
               <div className="flex justify-end gap-3">

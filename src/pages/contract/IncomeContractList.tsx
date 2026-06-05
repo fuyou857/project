@@ -311,7 +311,7 @@ export default function IncomeContractList() {
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-bold text-gray-800">收入合同签约管理</h3>
         <div className="flex gap-2">
-          <input type="file" ref={fileInputRef} accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
+          <input type="file" ref={fileInputRef} accept=".xlsx,.xls" onChange={handleImport} className="ui-file-input-safe" data-file-upload-field="true" />
           <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-gray-800 rounded-lg"><FaUpload /> 导入Excel</button>
           <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-gray-800 rounded-lg"><FaFileExcel /> 导出Excel</button>
           <button onClick={() => {
@@ -383,7 +383,7 @@ export default function IncomeContractList() {
       <AnimatePresence>
         {showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-800">{editingId ? '编辑' : '新增'}收入合同</h3><button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div><label className="block text-sm text-gray-500 mb-2">合同名称 *</label><input required value={form.contract_name || ''} onChange={(e) => setForm({ ...form, contract_name: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
@@ -430,7 +430,7 @@ export default function IncomeContractList() {
                       <input 
                         type="file" 
                         ref={attachmentFileInputRef} 
-                        className="hidden" 
+                        className="ui-file-input-safe" data-file-upload-field="true" 
                         multiple 
                         onChange={handleLocalFileSelect}
                       />
@@ -499,7 +499,7 @@ export default function IncomeContractList() {
               {/* 已生成合同选择器弹窗 */}
               {showAttachmentSelector && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]" onClick={() => setShowAttachmentSelector(false)}>
-                  <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="text-lg font-bold text-gray-800">选择已生成的合同作为附件</h4>
                       <button onClick={() => setShowAttachmentSelector(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>

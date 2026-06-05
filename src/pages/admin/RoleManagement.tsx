@@ -208,7 +208,7 @@ export default function RoleManagement() {
       <AnimatePresence>
         {showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-800">{editingRole ? '编辑角色' : '新增角色'}</h3><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowModal(false); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div><label className="block text-sm text-gray-500 mb-2">角色名称 *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
@@ -224,7 +224,7 @@ export default function RoleManagement() {
       <AnimatePresence>
         {showPermModal && editingRole &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPermModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
                 <div className="flex-1 min-w-0 pr-2">
                   <div className="flex items-start justify-between gap-2">
@@ -296,7 +296,7 @@ export default function RoleManagement() {
       <AnimatePresence>
         {showDeleteModal && deleteTarget &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeleteModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-3 mb-4"><FaExclamationTriangle className="text-yellow-400 w-6 h-6" /><h3 className="text-xl font-bold text-gray-800">确认删除</h3></div>
               <p className="text-gray-700 mb-6">确定要删除角色 <span className="text-gray-800 font-medium">{deleteTarget.name}</span> 吗？此操作不可恢复。</p>
               <div className="flex justify-end gap-3">

@@ -779,8 +779,7 @@ const MachineManagement: React.FC = () => {
                   return (
                     <motion.div
                       key={item.machine_id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
                       onClick={() => openDrillDown({ type: 'machine', id: item.machine_id }, '机械详情')}
                     >
@@ -824,8 +823,7 @@ const MachineManagement: React.FC = () => {
           onClick={() => setShowMachineModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -975,8 +973,7 @@ const MachineManagement: React.FC = () => {
           onClick={() => setShowCategoryModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-md border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1061,8 +1058,7 @@ const MachineManagement: React.FC = () => {
           onClick={() => setShowDrillDownModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-3xl max-h-[80vh] overflow-y-auto border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >

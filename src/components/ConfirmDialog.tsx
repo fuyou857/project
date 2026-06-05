@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { MODAL_BACKDROP_MOTION, MODAL_PANEL_MOTION } from './ui/modalMotion';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -63,16 +64,12 @@ export function ConfirmDialog({
           aria-describedby="confirm-dialog-message"
         >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            {...MODAL_BACKDROP_MOTION}
             className="fixed inset-0 bg-black/50"
             onClick={(e) => { e.stopPropagation(); onClose(); }}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            {...MODAL_PANEL_MOTION}
             className="relative bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6"
             onClick={e => e.stopPropagation()}
           >

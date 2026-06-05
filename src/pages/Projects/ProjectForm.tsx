@@ -100,9 +100,7 @@ function QuickAddPartyAModal({ show, onClose, onSuccess }: QuickAddPartyAProps) 
       onClick={(e) => { e.stopPropagation(); onClose(); }}>
       
       <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.9 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}>
         
@@ -260,9 +258,7 @@ export default function ProjectForm({
       onClick={(e) => { e.stopPropagation(); onClose(); }}>
       
       <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.9 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-2xl mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-xl"
         onClick={(e) => e.stopPropagation()}>
         
@@ -528,7 +524,7 @@ export default function ProjectForm({
                 ref={managerIdCardInputRef}
                 accept="image/*,.pdf"
                 onChange={onManagerIdCardUpload}
-                className="hidden" />
+                className="ui-file-input-safe" data-file-upload-field="true" />
               
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <button
@@ -571,7 +567,7 @@ export default function ProjectForm({
                 ref={stampAuthInputRef}
                 accept="image/*,.pdf"
                 onChange={onStampAuthUpload}
-                className="hidden" />
+                className="ui-file-input-safe" data-file-upload-field="true" />
               
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <button

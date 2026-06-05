@@ -531,8 +531,7 @@ export default function MachineShift() {
             {projectStats.byMachine.map((item: any, index: number) => (
               <motion.div
                 key={item.machine_id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
                 className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => openDrillDown('机械使用明细', { projectId: selectedProjectId, machineId: item.machine_id })}
@@ -750,8 +749,7 @@ export default function MachineShift() {
           onClick={() => setShowFormModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -909,14 +907,14 @@ export default function MachineShift() {
                       </button>
                     </div>
                   ))}
-                  <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50">
+                  <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 relative">
                     <FaCamera className="w-6 h-6 text-gray-400" />
                     <input
                       type="file"
                       accept="image/*"
                       multiple
                       onChange={handleImageUpload}
-                      className="hidden"
+                      className="ui-file-input-overlay" data-file-upload-field="true"
                     />
                   </label>
                 </div>

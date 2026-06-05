@@ -132,7 +132,7 @@ export default function PartyA() {
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleCloseModal}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-800">{editing ? '编辑甲方单位' : '新增甲方单位'}</h3><button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div><label className="block text-sm text-gray-500 mb-2">单位名称 *</label><input type="text" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} className={`w-full px-4 py-2 bg-gray-50 border rounded-lg text-gray-800 ${errors.name ? 'border-red-500' : 'border-slate-600'}`} />{errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}</div>
@@ -173,7 +173,7 @@ export default function PartyA() {
       <AnimatePresence>
         {showDelete && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDelete(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-gray-800 mb-4">确认删除</h3>
               <p className="text-gray-700 mb-6">确定要删除此甲方单位吗？</p>
               <div className="flex justify-end gap-3">

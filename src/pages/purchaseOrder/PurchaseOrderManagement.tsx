@@ -6,13 +6,21 @@ import {
   FaUser
 } from 'react-icons/fa';
 import { supabase } from '../../supabase/client';
-import { SegmentedControl } from '../../components/ui';
+import { SearchableSelect, SegmentedControl } from '../../components/ui';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 import type { PurchaseOrder, PurchaseOrderItem, PurchaseOrderFormData, PurchaseOrderItemForm } from './types';
 import { purchaseOrderApi } from './api';
 
 const PAGE_SIZE = 20;
 
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
+
 const PurchaseOrderManagement: React.FC = () => {
+  const { filterOptions: projectFilterOptions, options: projectFormOptions, getProjectName } =
+    useProjectsForSelect({ filterEmptyLabel: '全部项目', emptyLabel: '选择项目' });
   // 列表状态
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +43,6 @@ const PurchaseOrderManagement: React.FC = () => {
   });
   
   // 选项列表
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [materials, setMaterials] = useState<{ id: string; code: string; name: string; unit: string; default_price: number }[]>([]);
   const [contracts, setContracts] = useState<{ id: string; contract_no: string; supplier_name: string }[]>([]);
@@ -58,12 +65,6 @@ const PurchaseOrderManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-  
-  // 加载项目列表
-  const loadProjects = async () => {
-    const { data } = await supabase.from('projects').select('id, name');
-    setProjects(data?.map(p => ({ id: p.id, name: p.name })) || []);
   };
   
   // 加载供应商列表
@@ -104,7 +105,6 @@ const PurchaseOrderManagement: React.FC = () => {
   
   useEffect(() => {
     loadOrders();
-    loadProjects();
     loadSuppliers();
     loadMaterials();
   }, [page, search, statusFilter, projectFilter]);
@@ -308,16 +308,16 @@ const PurchaseOrderManagement: React.FC = () => {
             />
           </div>
           
-          <select
-            value={projectFilter}
-            onChange={e => { setProjectFilter(e.target.value); setPage(1); }}
-            className="px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800"
-          >
-            <option value="">全部项目</option>
-            {projects.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          <div className="min-w-[12rem]">
+            <SearchableSelect
+              value={projectFilter}
+              onChange={v => { setProjectFilter(v); setPage(1); }}
+              options={projectFilterOptions}
+              placeholder="全部项目"
+              emptyLabel="全部项目"
+              {...PROJECT_SEARCH_PROPS}
+            />
+          </div>
           
           <select
             value={statusFilter}
@@ -368,7 +368,7 @@ const PurchaseOrderManagement: React.FC = () => {
                   >
                     <td className="py-3 px-4 text-gray-800 font-mono font-medium">{order.order_no}</td>
                     <td className="py-3 px-4 text-gray-700">
-                      {projects.find(p => p.id === order.project_id)?.name || '-'}
+                      {getProjectName(order.project_id)}
                     </td>
                     <td className="py-3 px-4 text-gray-700">{order.supplier_name || '-'}</td>
                     <td className="py-3 px-4 text-right text-gray-800 font-medium">
@@ -440,9 +440,7 @@ const PurchaseOrderManagement: React.FC = () => {
           onClick={() => setShowFormModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-200"
             onClick={e => e.stopPropagation()}
           >
@@ -483,17 +481,15 @@ const PurchaseOrderManagement: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">项目 *</label>
-                  <select
+                  <SearchableSelect
                     required
+                    allowEmpty={false}
                     value={form.project_id}
-                    onChange={e => setForm(prev => ({ ...prev, project_id: e.target.value }))}
-                    className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800"
-                  >
-                    <option value="">选择项目</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                    onChange={v => setForm(prev => ({ ...prev, project_id: v }))}
+                    options={projectFormOptions}
+                    placeholder="选择项目"
+                    {...PROJECT_SEARCH_PROPS}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">供应商 *</label>

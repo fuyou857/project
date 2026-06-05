@@ -5,5 +5,7 @@ export type { UiSelectOption, SearchableSelectProps } from './SearchableSelect';
 export { default as EmptyState } from './EmptyState';
 export { default as FormLabel } from './FormLabel';
 export { default as UiModalOverlay } from './UiModalOverlay';
+export { default as FileUploadField, FILE_UPLOAD_INPUT_ATTR } from './FileUploadField';
+export { MODAL_BACKDROP_MOTION, MODAL_PANEL_MOTION } from './modalMotion';
 export { default as Skeleton } from './Skeleton';
 export * from './options';

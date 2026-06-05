@@ -35,8 +35,7 @@ export default function TaskKanbanCard({ task, executors, projectName, onClick }
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
       onClick={onClick}
       className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm cursor-pointer hover:border-blue-300 transition-all"

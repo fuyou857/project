@@ -102,14 +102,8 @@ export default function CostInvoiceEntryWorkspace_v2({
     }
   };
 
-  const handleCloseClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      onClose();
-    } catch (err) {
-      console.error('[CostInvoiceEntryWorkspace_v2] 取消按钮点击失败', err);
-    }
+  const handleCloseClick = () => {
+    onClose();
   };
 
   return (
@@ -133,8 +127,8 @@ export default function CostInvoiceEntryWorkspace_v2({
         </div>
       </div>
 
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        <div className="w-[45%] p-4 border-r border-slate-200 flex flex-col">
+      <div className="flex-1 flex min-h-0 overflow-visible">
+        <div className="w-[45%] shrink-0 p-4 border-r border-slate-200 flex flex-col overflow-visible">
           <InvoicePreviewPanel_v2
             attachments={form.attachment_urls}
             activeIndex={activeAttachment}
@@ -147,7 +141,8 @@ export default function CostInvoiceEntryWorkspace_v2({
           />
         </div>
 
-        <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
+        <form onSubmit={onSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-center">
               <div className="text-2xl font-bold text-emerald-600">{stats.success}</div>
@@ -323,8 +318,9 @@ export default function CostInvoiceEntryWorkspace_v2({
               </div>
             </div>
           </div>
+          </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div className="shrink-0 bg-slate-50 flex items-center justify-between px-6 py-4 border-t border-slate-100">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -338,9 +334,8 @@ export default function CostInvoiceEntryWorkspace_v2({
             <div className="flex gap-3">
               <button
                 type="button"
-                onMouseDown={(e) => e.stopPropagation()}
                 onClick={handleCloseClick}
-                className="pointer-events-auto px-6 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all active:scale-95"
+                className="px-6 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all active:scale-95"
               >
                 取消
               </button>

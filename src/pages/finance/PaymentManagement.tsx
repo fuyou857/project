@@ -475,7 +475,7 @@ export default function PaymentManagement() {
       <AnimatePresence>
         {showModal &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">工程款支付</h3>
                 <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-800 transition-colors"><FaTimes /></button>
@@ -683,7 +683,7 @@ export default function PaymentManagement() {
       <AnimatePresence>
         {deleteConfirm.show &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200">
               <h3 className="text-xl font-bold text-gray-800 mb-4">确认删除</h3>
               <p className="text-gray-700 mb-6">确定要删除付款记录「{deleteConfirm.name}」吗？此操作不可撤销。</p>
               <div className="flex justify-end gap-3">

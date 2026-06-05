@@ -2,13 +2,12 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaUpload, FaEdit, FaTrash, FaPaperclip, FaTimes } from 'react-icons/fa';
 import { SearchableSelect } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 
-const mockProjects = [
-  { id: '1', name: '星河湾小区工程' },
-  { id: '2', name: '市政道路改造' },
-  { id: '3', name: '商业综合体' },
-];
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 const mockTeams = [
   { id: '1', name: '钢筋班组' },
@@ -36,6 +35,9 @@ const mockReports: OutputReportRow[] = [
 ];
 
 export default function OutputReport() {
+  const { projects, options: projectOptions, getProjectName } = useProjectsForSelect({
+    emptyLabel: '请选择项目',
+  });
   const [reports, setReports] = useState<OutputReportRow[]>(mockReports);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<{
@@ -56,11 +58,11 @@ export default function OutputReport() {
       alert('请填写必填项');
       return;
     }
-    const project = mockProjects.find(p => p.id === formData.projectId);
+    const project = projects.find(p => p.id === formData.projectId);
     const newReport = {
       id: String(Date.now()),
       projectId: formData.projectId,
-      projectName: project?.name || '',
+      projectName: project?.name || getProjectName(formData.projectId),
       teamName: formData.teamName,
       month: formData.month,
       amount: formData.amount,
@@ -85,7 +87,6 @@ export default function OutputReport() {
     rejected: { label: '已驳回', color: 'bg-red-500' },
   };
 
-  const projectOptions = useMemo(() => projectSelectOptions(mockProjects, '请选择项目'), []);
   const teamOptions = useMemo(
     () => [{ value: '', label: '请选择班组' }, ...mockTeams.map(t => ({ value: t.name, label: t.name }))],
     [],
@@ -143,7 +144,7 @@ export default function OutputReport() {
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={(e) => { e.stopPropagation(); }}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">产值上报</h3>
                 <button onClick={(e) => { e.stopPropagation(); }} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -157,7 +158,7 @@ export default function OutputReport() {
                     onChange={v => setFormData({ ...formData, projectId: v })}
                     options={projectOptions}
                     placeholder="请选择项目"
-                    searchPlaceholder="搜索项目…"
+                    {...PROJECT_SEARCH_PROPS}
                   />
                 </div>
                 <div>
@@ -187,10 +188,10 @@ export default function OutputReport() {
                 </div>
                 <div>
                   <label className="block text-gray-500 text-sm mb-2">凭证附件 (最多5个)</label>
-                  <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg cursor-pointer hover:bg-gray-500">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg cursor-pointer hover:bg-gray-500 relative">
                     <FaUpload className="text-gray-500" />
                     <span className="text-gray-500 text-sm">上传附件</span>
-                    <input type="file" multiple accept="image/*,.pdf" className="hidden" />
+                    <input type="file" multiple accept="image/*,.pdf" className="ui-file-input-overlay" data-file-upload-field="true" />
                   </label>
                 </div>
                 <div>

@@ -1,11 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaUpload, FaUser, FaCalendarAlt, FaMoneyCheckAlt, FaSearch, FaTimes } from 'react-icons/fa';
 import { supabase } from '../supabase/client';
 import { alertMissingRequiredFields } from '../utils/contractSubPage';
 import { SearchableSelect } from '../components/ui';
-import { projectSelectOptions } from '../components/ui/options';
+import { useProjectsForSelect } from '../hooks/useProjectsForSelect';
+
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 function getActiveTabFromPath(pathname: string): string {
   if (pathname.includes('/attendance')) return 'attendance';
@@ -40,12 +45,11 @@ interface WagePayment {
   status: string;
 }
 
-const mockProjects = [
-  { id: '1', name: '万科城市之光' },
-  { id: '2', name: '碧桂园一期' },
-];
-
 export default function Workers() {
+  const { filterOptions: projectFilterOptions, options: projectFormOptions } = useProjectsForSelect({
+    filterEmptyLabel: '全部项目',
+    emptyLabel: '请选择项目',
+  });
   const location = useLocation();
   const activeTab = getActiveTabFromPath(location.pathname);
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -122,9 +126,6 @@ export default function Workers() {
 
   const formatMoney = (amount: number) => `¥${(amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
-  const projectFilterOptions = useMemo(() => projectSelectOptions(mockProjects, '全部项目'), []);
-  const projectFormOptions = useMemo(() => projectSelectOptions(mockProjects, '请选择项目'), []);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -148,7 +149,7 @@ export default function Workers() {
               options={projectFilterOptions}
               placeholder="全部项目"
               emptyLabel="全部项目"
-              searchPlaceholder="搜索项目…"
+              {...PROJECT_SEARCH_PROPS}
             />
           </div>
           <div className="flex-1 relative">
@@ -290,9 +291,7 @@ export default function Workers() {
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           >
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200"
               onClick={e => e.stopPropagation()}
             >
@@ -312,7 +311,7 @@ export default function Workers() {
                     onChange={v => setSelectedProject(v)}
                     options={projectFormOptions}
                     placeholder="请选择项目"
-                    searchPlaceholder="搜索项目…"
+                    {...PROJECT_SEARCH_PROPS}
                   />
                 </div>
                 <div>

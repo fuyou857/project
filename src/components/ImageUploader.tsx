@@ -1,4 +1,4 @@
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, useId, useCallback, type ChangeEvent } from 'react';
 import { FaUpload, FaTimes } from 'react-icons/fa';
 import { supabase } from '../supabase/client';
 import { useApp } from '../stores';
@@ -28,6 +28,7 @@ export default function ImageUploader({
   disabled = false,
 }: ImageUploaderProps) {
   const { currentCompany } = useApp();
+  const inputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -117,7 +118,7 @@ export default function ImageUploader({
     }
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -137,7 +138,7 @@ export default function ImageUploader({
     await handleFileSelect(synthetic);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
   };
@@ -146,30 +147,43 @@ export default function ImageUploader({
     onChange(value.filter(a => a.id !== id));
   };
 
+  const inputDisabled = disabled || value.length >= maxFiles || uploading;
+
+  const openFilePicker = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inputDisabled) return;
+    fileInputRef.current?.click();
+  }, [inputDisabled]);
+
   return (
     <div className="space-y-4">
-      <div
+      <label
+        htmlFor={!inputDisabled ? inputId : undefined}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+        className={`relative block border-2 border-dashed rounded-lg p-6 text-center transition-colors min-h-[140px] ${
           disabled
             ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
             : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 cursor-pointer'
         }`}
-        onClick={() => !disabled && fileInputRef.current?.click()}
       >
         <input
           ref={fileInputRef}
+          id={inputId}
+          data-file-upload-field="true"
           type="file"
           multiple
           accept={accept}
           onChange={handleFileSelect}
-          disabled={disabled || value.length >= maxFiles}
-          className="hidden"
+          disabled={inputDisabled}
+          className="ui-file-input-overlay"
+          aria-hidden
+          tabIndex={-1}
         />
-        
+
         {uploading ? (
-          <div className="space-y-2">
+          <div className="pointer-events-none space-y-2">
             <FaUpload className="mx-auto h-8 w-8 text-blue-500 animate-pulse" />
             <p className="text-sm text-gray-600">上传中 {uploadProgress}%</p>
             <div className="w-full bg-gray-200 rounded-full h-2 max-w-xs mx-auto">
@@ -180,7 +194,7 @@ export default function ImageUploader({
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="pointer-events-none space-y-2">
             <FaUpload className="mx-auto h-8 w-8 text-gray-400" />
             <p className="text-sm text-gray-600">
               点击上传或拖拽图片到此处
@@ -191,9 +205,22 @@ export default function ImageUploader({
             <p className="text-xs text-gray-400">
               已上传 {value.length}/{maxFiles}
             </p>
+            {!inputDisabled && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={openFilePicker}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') openFilePicker(e as unknown as React.MouseEvent);
+                }}
+                className="pointer-events-auto inline-block mt-2 px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200"
+              >
+                浏览文件
+              </span>
+            )}
           </div>
         )}
-      </div>
+      </label>
 
       {value.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

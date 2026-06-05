@@ -491,8 +491,8 @@ export default function IncomeInvoiceIssue() {
                   onChange={e => handleFileUpload(e, 'tax_payment_voucher')}
                   accept=".jpg,.jpeg,.png,.pdf"
                   multiple
-                  className="sr-only"
-                  tabIndex={-1}
+                  className="ui-file-input-safe"
+                  data-file-upload-field="true"
                 />
                 <label
                   htmlFor={INCOME_INVOICE_ISSUE_VOUCHER_FILE_ID}
@@ -530,8 +530,8 @@ export default function IncomeInvoiceIssue() {
               onChange={e => handleFileUpload(e, 'invoice_photo')}
               accept=".jpg,.jpeg,.png,.pdf"
               multiple
-              className="sr-only"
-              tabIndex={-1}
+              className="ui-file-input-safe"
+              data-file-upload-field="true"
             />
             <label
               htmlFor={INCOME_INVOICE_ISSUE_PHOTO_FILE_ID}

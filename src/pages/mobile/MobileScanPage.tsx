@@ -512,9 +512,7 @@ const MobileScanPage: React.FC = () => {
             <AnimatePresence mode="wait">
               {scanState === 'idle' && (
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 >
                   <FaQrcode className="w-16 h-16 text-gray-400 mb-3" />
                   <span className="text-gray-600">点击扫码</span>
@@ -523,9 +521,7 @@ const MobileScanPage: React.FC = () => {
               
               {scanState === 'scanning' && (
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 >
                   <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-3" />
                   <span className="text-blue-600">扫描中...</span>
@@ -534,9 +530,7 @@ const MobileScanPage: React.FC = () => {
               
               {scanState === 'success' && (
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   transition={{ delay: 0.2 }}
                 >
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-3">
@@ -548,9 +542,7 @@ const MobileScanPage: React.FC = () => {
               
               {scanState === 'error' && (
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 >
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-3">
                     <FaExclamationCircle className="w-8 h-8 text-red-600" />

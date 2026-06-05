@@ -119,7 +119,7 @@ export default function OutputAudit() {
       <AnimatePresence>
         {showRejectModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowRejectModal(null)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200" onClick={e => e.stopPropagation()}>
               <h4 className="text-lg font-bold text-gray-800 mb-4">驳回原因</h4>
               <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="请输入驳回原因" rows={3} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 text-gray-800 rounded-lg resize-none" />
               <div className="flex justify-end gap-3 mt-4">
@@ -134,7 +134,7 @@ export default function OutputAudit() {
       <AnimatePresence>
         {showDetail && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowDetail(null)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200" onClick={e => e.stopPropagation()}>
               <h4 className="text-lg font-bold text-gray-800 mb-4">产值详情</h4>
               <div className="space-y-3 text-gray-700">
                 <div className="flex justify-between"><span>项目：</span><span className="text-gray-800">{showDetail.projectName}</span></div>

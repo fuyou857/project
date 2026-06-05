@@ -1690,7 +1690,7 @@ export default function ContractTemplateLibraryPage() {
           <input
               type="file"
               accept=".docx"
-              className="hidden"
+              className="ui-file-input-overlay" data-file-upload-field="true"
               disabled={uploading || Boolean(v.template.deleted_at)}
               onChange={(e) => {
                 const f = e.target.files?.[0];

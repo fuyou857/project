@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
+import { MODAL_BACKDROP_MOTION, MODAL_PANEL_MOTION } from './ui/modalMotion';
 
 interface ModalProps {
   isOpen: boolean;
@@ -52,18 +53,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', showClose
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            {...MODAL_BACKDROP_MOTION}
             className="fixed inset-0 bg-black/50"
             onClick={(e) => { e.stopPropagation(); onClose(); }}
             aria-hidden="true"
           />
           <motion.div
             ref={panelRef}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            {...MODAL_PANEL_MOTION}
             className={`relative bg-slate-800 rounded-xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden`}
             onClick={e => e.stopPropagation()}
             role="dialog"

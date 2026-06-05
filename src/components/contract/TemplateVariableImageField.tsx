@@ -90,12 +90,12 @@ export default function TemplateVariableImageField({ templateId, value, onChange
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700 w-fit">
+      <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700 w-fit relative">
         <input
           type="file"
           accept="image/*"
           multiple
-          className="hidden"
+          className="ui-file-input-overlay" data-file-upload-field="true"
           onChange={(e) => {
             const fl = e.target.files;
             e.target.value = '';

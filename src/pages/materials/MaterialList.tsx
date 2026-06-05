@@ -1,14 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaPlus, FaUpload, FaEdit, FaTrash, FaTimes, FaCheck } from 'react-icons/fa';
 import { SearchableSelect } from '../../components/ui';
-import { projectSelectOptions } from '../../components/ui/options';
+import { useProjectsForSelect } from '../../hooks/useProjectsForSelect';
 
-const mockProjects = [
-  { id: '1', name: '星河湾小区工程' },
-  { id: '2', name: '市政道路改造' },
-  { id: '3', name: '商业综合体' },
-];
+const PROJECT_SEARCH_PROPS = {
+  searchThreshold: 1 as const,
+  searchPlaceholder: '搜索项目名称或编号…',
+};
 
 type MaterialRow = {
   id: string;
@@ -42,7 +41,7 @@ export default function MaterialList() {
     return user.role === 'super_admin' || user.role_ids?.includes('super_admin');
   };
 
-  const projectOptions = useMemo(() => projectSelectOptions(mockProjects, '选择项目'), []);
+  const { options: projectOptions } = useProjectsForSelect({ emptyLabel: '选择项目' });
 
   const filteredMaterials = materials.filter(m =>
     m.name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -110,7 +109,7 @@ export default function MaterialList() {
               onChange={setSelectedProject}
               options={projectOptions}
               placeholder="选择项目"
-              searchPlaceholder="搜索项目…"
+              {...PROJECT_SEARCH_PROPS}
             />
           </div>
           <div className="relative">
@@ -175,7 +174,7 @@ export default function MaterialList() {
       <AnimatePresence>
         {showImportModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-bold text-gray-800">导入预览</h4>
                 <button onClick={() => setShowImportModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -218,7 +217,7 @@ export default function MaterialList() {
       <AnimatePresence>
         {showAddModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-bold text-gray-800">手动添加物料</h4>
                 <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button>
@@ -263,7 +262,7 @@ export default function MaterialList() {
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-sm border border-gray-200">
               <h4 className="text-lg font-bold text-gray-800 mb-2">确认删除</h4>
               <p className="text-gray-500 mb-6">确定要删除该物料吗？此操作不可恢复。</p>
               <div className="flex justify-end gap-3">

@@ -645,7 +645,7 @@ export default function Projects() {
             ref={fileInputRef}
             accept=".xlsx,.xls"
             onChange={handleImport}
-            className="hidden"
+            className="ui-file-input-safe" data-file-upload-field="true"
           />
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -717,9 +717,7 @@ export default function Projects() {
             onClick={() => setShowDelete(false)}
           >
             <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -754,9 +752,7 @@ export default function Projects() {
             onClick={() => setShowImportPreview(false)}
           >
             <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >

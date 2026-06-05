@@ -316,7 +316,7 @@ export default function MobileMachineShift() {
                   </button>
                 </div>
               ))}
-              <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50">
+              <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 relative">
                 <FaCamera className="w-6 h-6 text-gray-400" />
                 <input
                   type="file"
@@ -324,7 +324,7 @@ export default function MobileMachineShift() {
                   capture="environment"
                   multiple
                   onChange={handleImageUpload}
-                  className="hidden"
+                  className="ui-file-input-overlay" data-file-upload-field="true"
                 />
               </label>
             </div>

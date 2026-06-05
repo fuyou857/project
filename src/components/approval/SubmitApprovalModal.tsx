@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import SearchableSelect from '../ui/SearchableSelect';
+import { MODAL_PANEL_MOTION } from '../ui/modalMotion';
 import type { SubmitApprovalPlan, SubmitApprovalOpenConfig } from '../../services/approvalApproverService';
 import type { ApprovalStepPlanRow } from '../../services/approvalApproverService';
 
@@ -105,9 +106,7 @@ export default function SubmitApprovalModal({
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
+          {...MODAL_PANEL_MOTION}
           className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >

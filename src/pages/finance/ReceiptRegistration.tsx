@@ -454,7 +454,7 @@ export default function ReceiptRegistration() {
       <AnimatePresence>
         {showForm &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-3xl border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-3xl border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-gray-800">新增收款登记</h3><button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -556,7 +556,7 @@ export default function ReceiptRegistration() {
                   </div>
                   <div className="md:col-span-3">
                     <label className="block text-sm text-gray-500 mb-1">图片</label>
-                    <input type="file" ref={imageInputRef} onChange={handleFileUpload} accept=".jpg,.jpeg,.png,.pdf" multiple className="hidden" />
+                    <input type="file" ref={imageInputRef} onChange={handleFileUpload} accept=".jpg,.jpeg,.png,.pdf" multiple className="ui-file-input-safe" data-file-upload-field="true" />
                     <div onClick={() => imageInputRef.current?.click()} className="border-2 border-dashed border-slate-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500">
                       <FaUpload className="mx-auto text-gray-500 mb-2" />
                       <span className="text-gray-500 text-sm">{uploading ? '上传中...' : '点击上传jpg/png/pdf'}</span>
@@ -594,7 +594,7 @@ export default function ReceiptRegistration() {
       <AnimatePresence>
         {showDetail && detailReceipt &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowDetail(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-gray-800">收款登记详情</h3><button onClick={() => setShowDetail(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-gray-500">登记单号：</span><span className="text-gray-800">{detailReceipt.receipt_no}</span></div>
@@ -635,7 +635,7 @@ export default function ReceiptRegistration() {
       <AnimatePresence>
         {showEdit && editForm &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowEdit(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-gray-800">编辑收款登记</h3><button onClick={() => setShowEdit(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -683,7 +683,7 @@ export default function ReceiptRegistration() {
       <AnimatePresence>
         {showAddPartyA &&
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]" onClick={() => setShowAddPartyA(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold text-gray-800">新增甲方单位</h3><button onClick={() => setShowAddPartyA(false)} className="text-gray-500 hover:text-gray-800"><FaTimes /></button></div>
               <div className="space-y-3">
                 <div><label className="block text-gray-500 text-sm mb-1">单位名称 *</label><input value={newPartyA.name} onChange={(e) => setNewPartyA({ ...newPartyA, name: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>

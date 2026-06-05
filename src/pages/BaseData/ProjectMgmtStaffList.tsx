@@ -900,8 +900,7 @@ export default function ProjectMgmtStaffList() {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
         >
           <motion.div
-            initial={{ scale: 0.96 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[92vh] overflow-y-auto border border-gray-200 shadow-xl"
             onClick={e => e.stopPropagation()}
           >
@@ -1045,10 +1044,10 @@ export default function ProjectMgmtStaffList() {
 
               <div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-3 border-b pb-2">简历附件</h4>
-                <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer text-sm text-gray-800 mb-3">
+                <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer text-sm text-gray-800 mb-3 relative">
                   <FaUpload />
                   {uploadingResume ? '上传中…' : '上传简历（pdf / word / 图片）'}
-                  <input type="file" className="hidden" accept=".pdf,.doc,.docx,image/*" onChange={handleResumeUpload} disabled={uploadingResume} />
+                  <input type="file" className="ui-file-input-overlay" data-file-upload-field="true" accept=".pdf,.doc,.docx,image/*" onChange={handleResumeUpload} disabled={uploadingResume} />
                 </label>
                 <ul className="space-y-2">
                   {resumeFiles.map(f => (
@@ -1109,8 +1108,7 @@ export default function ProjectMgmtStaffList() {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
         >
           <motion.div
-            initial={{ scale: 0.96 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-lg border border-gray-200 shadow-xl"
             onClick={e => e.stopPropagation()}
           >

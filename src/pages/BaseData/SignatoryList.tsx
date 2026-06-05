@@ -299,9 +299,7 @@ export default function SignatoryList() {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-200"
             onClick={e => e.stopPropagation()}
           >
