@@ -182,8 +182,8 @@ const routes: RouteConfig[] = [
   { path: '/labor', element: <ProtectedLayout><LazyPage><Labor /></LazyPage></ProtectedLayout> },
 
   { path: '/seals', element: <ProtectedLayout><LazyPage><SealManagement /></LazyPage></ProtectedLayout> },
-  { path: '/seals/apply', element: <ProtectedLayout><LazyPage><SealManagement /></LazyPage></ProtectedLayout> },
   { path: '/seals/project', element: <ProtectedLayout><LazyPage><SealManagement /></LazyPage></ProtectedLayout> },
+  { path: '/seals/temp', element: <ProtectedLayout><LazyPage><SealManagement /></LazyPage></ProtectedLayout> },
   { path: '/seals/borrow', element: <ProtectedLayout><LazyPage><SealManagement /></LazyPage></ProtectedLayout> },
   { path: '/seals/history', element: <ProtectedLayout><LazyPage><SealManagement /></LazyPage></ProtectedLayout> },
 

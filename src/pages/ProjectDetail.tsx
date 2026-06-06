@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaSave, FaPlus, FaTrash, FaCheck, FaTimes, FaUpload, FaArrowLeft, FaEdit, FaEye, FaDownload, FaPrint, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSave, FaPlus, FaTrash, FaCheck, FaTimes, FaUpload, FaArrowLeft, FaEdit, FaEye, FaDownload, FaPrint, FaExclamationTriangle, FaPaperclip, FaFileImage, FaFilePdf, FaFileAlt, FaExternalLinkAlt } from 'react-icons/fa';
 import { supabase } from '../supabase/client';
 import { alertMissingRequiredFields } from '../utils/contractSubPage';
 import { getStatusLabel, getStatusColor } from './Projects/types';
@@ -61,6 +61,13 @@ const initialSupplierForm: {
 type ProjectArchiveRow = Record<string, unknown>;
 type ArchiveAddForm = Record<string, string>;
 
+type DrillRecordType = 'seal' | 'income_invoice' | 'other_income' | 'expense_invoice' | 'payment' | 'deposit' | 'other_matter';
+
+interface DrillRecord {
+  type: DrillRecordType;
+  data: ProjectArchiveRow;
+}
+
 function archiveNum(row: ProjectArchiveRow, field: string): number {
   const x = row[field];
   if (typeof x === 'number' && !Number.isNaN(x)) return x;
@@ -109,7 +116,6 @@ export default function ProjectDetail() {
   const [selectedPartyBIds, setSelectedPartyBIds] = useState<string[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [sealRecords, setSealRecords] = useState<ProjectArchiveRow[]>([]);
-  const [incomeInvoices, setIncomeInvoices] = useState<ProjectArchiveRow[]>([]);
   const [projectIncome, setProjectIncome] = useState<ProjectArchiveRow[]>([]);
   const [otherIncome, setOtherIncome] = useState<ProjectArchiveRow[]>([]);
   const [expenseInvoices, setExpenseInvoices] = useState<ProjectArchiveRow[]>([]);
@@ -131,6 +137,8 @@ export default function ProjectDetail() {
   } | null>(null);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null;}>({});
   const [previewFile, setPreviewFile] = useState<{file_name: string;file_url: string;} | null>(null);
+  const [archiveSubmitting, setArchiveSubmitting] = useState(false);
+  const [drillRecord, setDrillRecord] = useState<DrillRecord | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -156,25 +164,27 @@ export default function ProjectDetail() {
     if (!id || id === 'new') {setArchiveLoading(false);return;}
     setArchiveLoading(true);
     try {
-      const [sealRes, invRes, payRes, otherIncRes, depRes, matterRes, newOtherIncRes] = await Promise.all([
-      supabase.from('seal_usage_records').select('*').eq('project_id', id).eq('usage_type', '项目盖章').order('created_at', { ascending: false }).limit(100),
-      supabase.from('cost_invoices').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(100),
-      supabase.from('payment_records').select('*').eq('project_id', id).order('transfer_date', { ascending: false }).limit(100),
-      supabase.from('project_other_income').select('*').eq('project_id', id).order('income_date', { ascending: false }).limit(100),
-      supabase.from('project_deposit_records').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(100),
-      supabase.from('project_other_matters').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(100),
-      supabase.from('other_incomes').select('*').eq('project_id', id).order('income_date', { ascending: false }).limit(100)]
+      const safeQuery = <T,>(p: Promise<{ data: T | null; error: any }>) =>
+        p.then(r => ({ data: r.data ?? [] as T, error: r.error }))
+         .catch(err => { console.error('fetchArchiveData query error:', err); return { data: [] as T, error: err }; });
+
+      const [sealRes, payRes, otherIncRes, depRes, matterRes, newOtherIncRes] = await Promise.all([
+      safeQuery(supabase.from('seal_usage_records').select('*').eq('project_id', id).eq('usage_type', '项目盖章').order('created_at', { ascending: false }).limit(100)),
+      safeQuery(supabase.from('payment_records').select('*').eq('project_id', id).order('transfer_date', { ascending: false }).limit(100)),
+      safeQuery(supabase.from('project_other_income').select('*').eq('project_id', id).order('income_date', { ascending: false }).limit(100)),
+      safeQuery(supabase.from('project_deposit_records').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(100)),
+      safeQuery(supabase.from('project_other_matters').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(100)),
+      safeQuery(supabase.from('other_incomes').select('*').eq('project_id', id).order('income_date', { ascending: false }).limit(100))]
       );
       setSealRecords(sealRes.data || []);
-      setIncomeInvoices(invRes.data || []);
       setPaymentRecords(payRes.data || []);
       const combinedOtherIncome = [...(otherIncRes.data || []), ...(newOtherIncRes.data || [])];
       setOtherIncome(combinedOtherIncome);
       setDepositRecords(depRes.data || []);
       setOtherMatters(matterRes.data || []);
-      const incomeRes = await supabase.from('income_invoices').select('*').eq('project_id', id).order('invoice_date', { ascending: false }).limit(100);
+      const incomeRes = await safeQuery(supabase.from('income_invoices').select('*').eq('project_id', id).order('invoice_date', { ascending: false }).limit(100));
       setProjectIncome(incomeRes.data || []);
-      const expInvRes = await supabase.from('cost_invoices').select('*').eq('project_id', id).order('invoice_date', { ascending: false }).limit(100);
+      const expInvRes = await safeQuery(supabase.from('cost_invoices').select('*').eq('project_id', id).order('invoice_date', { ascending: false }).limit(100));
       setExpenseInvoices(expInvRes.data || []);
     } catch (err) {console.error('fetchArchiveData error:', err);}
     setArchiveLoading(false);
@@ -356,27 +366,40 @@ export default function ProjectDetail() {
   }
 
   async function handleAddArchiveRecord() {
-    if (!id) return;
+    if (!id || archiveSubmitting) return;
     if (showAddModal === 'otherIncome') {
-      await supabase.from('project_other_income').insert({
-        project_id: id,
-        income_date: addForm.income_date ?? '',
-        income_amount: parseFloat(addForm.income_amount ?? '') || 0,
-        payer_name: addForm.payer_name || null,
-        remark: addForm.remark || null
-      });
+      if (!addForm.income_date?.trim()) { alert('请填写到账时间'); return; }
+      const amount = parseFloat(addForm.income_amount ?? '');
+      if (!amount || amount <= 0) { alert('请填写有效的收入金额'); return; }
+      setArchiveSubmitting(true);
+      try {
+        await supabase.from('project_other_income').insert({
+          project_id: id,
+          income_date: addForm.income_date,
+          income_amount: amount,
+          payer_name: addForm.payer_name || null,
+          remark: addForm.remark || null
+        });
+      } finally { setArchiveSubmitting(false); }
     } else if (showAddModal === 'deposit') {
-      await supabase.from('project_deposit_records').insert({
-        project_id: id,
-        bid_bond: parseFloat(addForm.bid_bond ?? '') || null,
-        bid_bond_remark: addForm.bid_bond_remark || null,
-        performance_bond: parseFloat(addForm.performance_bond ?? '') || null,
-        performance_bond_remark: addForm.performance_bond_remark || null,
-        quality_bond: parseFloat(addForm.quality_bond ?? '') || null,
-        quality_bond_remark: addForm.quality_bond_remark || null
-      });
+      setArchiveSubmitting(true);
+      try {
+        await supabase.from('project_deposit_records').insert({
+          project_id: id,
+          bid_bond: parseFloat(addForm.bid_bond ?? '') || null,
+          bid_bond_remark: addForm.bid_bond_remark || null,
+          performance_bond: parseFloat(addForm.performance_bond ?? '') || null,
+          performance_bond_remark: addForm.performance_bond_remark || null,
+          quality_bond: parseFloat(addForm.quality_bond ?? '') || null,
+          quality_bond_remark: addForm.quality_bond_remark || null
+        });
+      } finally { setArchiveSubmitting(false); }
     } else if (showAddModal === 'matters') {
-      await supabase.from('project_other_matters').insert({ project_id: id, content: addForm.content ?? '' });
+      if (!addForm.content?.trim()) { alert('请填写事项内容'); return; }
+      setArchiveSubmitting(true);
+      try {
+        await supabase.from('project_other_matters').insert({ project_id: id, content: addForm.content });
+      } finally { setArchiveSubmitting(false); }
     }
     setShowAddModal(null);
     setAddForm({});
@@ -833,7 +856,7 @@ export default function ProjectDetail() {
                   </thead>
                   <tbody>
                     {suppliers.map((s) => {
-                  const supplierInvoices = incomeInvoices.filter((inv) => archiveStr(inv, 'supplier_id') === s.id);
+                  const supplierInvoices = expenseInvoices.filter((inv) => archiveStr(inv, 'supplier_id') === s.id);
                   const supplierPayments = paymentRecords.filter((pay) => archiveStr(pay, 'supplier_id') === s.id);
                   const invoicedAmount = supplierInvoices.reduce((sum, inv) => sum + archiveNum(inv, 'invoice_amount'), 0);
                   const paidAmount = supplierPayments.reduce((sum, pay) => sum + archiveNum(pay, 'amount'), 0);
@@ -872,7 +895,7 @@ export default function ProjectDetail() {
                     <h3 className="text-gray-800 font-medium">1. 盖章记录</h3>
                   </div>
                   {sealRecords.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">时间</th><th className="text-left py-2 px-2">盖章内容</th><th className="text-left py-2 px-2">份数</th><th className="text-left py-2 px-2">盖章人姓名</th><th className="text-left py-2 px-2">盖章人电话</th></tr></thead><tbody>{sealRecords.map((r, _i) => <tr key={archiveStr(r, 'id') || `seal-${_i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{archiveDateSlice(r, 'created_at')}</td><td className="py-2 px-2 text-blue-600">{archiveDisplay(r, 'usage_reason')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'copies')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'borrower_name')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'borrower_phone')}</td></tr>)}</tbody></table>
+              <table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">时间</th><th className="text-left py-2 px-2">盖章内容</th><th className="text-left py-2 px-2">份数</th><th className="text-left py-2 px-2">盖章人姓名</th><th className="text-left py-2 px-2">盖章人电话</th></tr></thead><tbody>{sealRecords.map((r, _i) => <tr key={archiveStr(r, 'id') || `seal-${_i}`} className="border-b border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'seal', data: r })}><td className="py-2 px-2 text-gray-700">{archiveDateSlice(r, 'created_at')}</td><td className="py-2 px-2 text-blue-600">{archiveDisplay(r, 'usage_reason')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'copies')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'borrower_name')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'borrower_phone')}</td></tr>)}</tbody></table>
               }
                 </div>
 
@@ -881,32 +904,23 @@ export default function ProjectDetail() {
                     <h3 className="text-gray-800 font-medium">2. 开票记录（收入）</h3>
                   </div>
                   {projectIncome.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">时间</th><th className="text-right py-2 px-2">开票金额</th><th className="text-left py-2 px-2">开票公司</th><th className="text-left py-2 px-2">收款人</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{projectIncome.map((r, i) => <tr key={archiveStr(r, 'id') || `pi-${i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_date')}</td><td className="py-2 px-2 text-right text-green-600">{formatMoney(archiveNum(r, 'invoice_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_company')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'payee')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(incomeTotal)}</div></>
+              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">时间</th><th className="text-right py-2 px-2">开票金额</th><th className="text-left py-2 px-2">开票公司</th><th className="text-left py-2 px-2">收款人</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{projectIncome.map((r, i) => <tr key={archiveStr(r, 'id') || `pi-${i}`} className="border-b border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'income_invoice', data: r })}><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_date')}</td><td className="py-2 px-2 text-right text-green-600">{formatMoney(archiveNum(r, 'invoice_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_company')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'payee')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(incomeTotal)}</div></>
               }
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">3. 工程款收入</h3>
-                  </div>
-                  {incomeInvoices.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">到账时间</th><th className="text-right py-2 px-2">到账工程款金额</th><th className="text-left py-2 px-2">到账公司</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{incomeInvoices.map((r, i) => <tr key={archiveStr(r, 'id') || `ii-${i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_date')}</td><td className="py-2 px-2 text-right text-green-600">{formatMoney(archiveNum(r, 'invoice_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_company')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(incomeTotal)}</div></>
-              }
-                </div>
-
-                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">4. 其他收入</h3>
+                    <h3 className="text-gray-800 font-medium">3. 其他收入</h3>
                     <button onClick={() => {setShowAddModal('otherIncome');setAddForm({ income_date: new Date().toISOString().split('T')[0] });}} className="px-3 py-1 bg-blue-600 text-white text-sm rounded flex items-center gap-1"><FaPlus /> 添加</button>
                   </div>
                   {otherIncome.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">到账时间</th><th className="text-right py-2 px-2">收入金额</th><th className="text-left py-2 px-2">到账公司</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{otherIncome.map((r, i) => <tr key={archiveStr(r, 'id') || `oi-${i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'income_date')}</td><td className="py-2 px-2 text-right text-green-600">{formatMoney(archiveNum(r, 'income_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'payer_name')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(otherIncomeTotal)}</div></>
+              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">到账时间</th><th className="text-right py-2 px-2">收入金额</th><th className="text-left py-2 px-2">到账公司</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{otherIncome.map((r, i) => <tr key={archiveStr(r, 'id') || `oi-${i}`} className="border-b border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'other_income', data: r })}><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'income_date')}</td><td className="py-2 px-2 text-right text-green-600">{formatMoney(archiveNum(r, 'income_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'payer_name')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(otherIncomeTotal)}</div></>
               }
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">5. 收入合计</h3>
+                    <h3 className="text-gray-800 font-medium">4. 收入合计</h3>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <span className="text-gray-600">总合计：</span>
@@ -916,46 +930,46 @@ export default function ProjectDetail() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">6. 支出发票记录</h3>
+                    <h3 className="text-gray-800 font-medium">5. 支出发票记录</h3>
                   </div>
                   {expenseInvoices.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">支出时间</th><th className="text-left py-2 px-2">发票类型</th><th className="text-right py-2 px-2">发票含税金额</th><th className="text-left py-2 px-2">提供人姓名</th></tr></thead><tbody>{expenseInvoices.map((r, i) => <tr key={archiveStr(r, 'id') || `ei-${i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_date')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_type')}</td><td className="py-2 px-2 text-right text-red-600">{formatMoney(archiveNum(r, 'invoice_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'provider_name')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(expenseTotal)}</div></>
+              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">支出时间</th><th className="text-left py-2 px-2">发票类型</th><th className="text-right py-2 px-2">发票含税金额</th><th className="text-left py-2 px-2">提供人姓名</th></tr></thead><tbody>{expenseInvoices.map((r, i) => <tr key={archiveStr(r, 'id') || `ei-${i}`} className="border-b border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'expense_invoice', data: r })}><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_date')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'invoice_type')}</td><td className="py-2 px-2 text-right text-red-600">{formatMoney(archiveNum(r, 'invoice_amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'provider_name')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(expenseTotal)}</div></>
               }
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">7. 工程款拨付记录</h3>
+                    <h3 className="text-gray-800 font-medium">6. 工程款拨付记录</h3>
                   </div>
                   {paymentRecords.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">支付时间</th><th className="text-left py-2 px-2">类型</th><th className="text-left py-2 px-2">收款单位</th><th className="text-right py-2 px-2">金额</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{paymentRecords.map((r, i) => <tr key={archiveStr(r, 'id') || `pr-${i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'transfer_date')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'payment_type')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'supplier_name')}</td><td className="py-2 px-2 text-right text-red-600">{formatMoney(archiveNum(r, 'amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(paymentTotal)}</div></>
+              <><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-left py-2 px-2">支付时间</th><th className="text-left py-2 px-2">类型</th><th className="text-left py-2 px-2">收款单位</th><th className="text-right py-2 px-2">金额</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{paymentRecords.map((r, i) => <tr key={archiveStr(r, 'id') || `pr-${i}`} className="border-b border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'payment', data: r })}><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'transfer_date')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'payment_type')}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'supplier_name')}</td><td className="py-2 px-2 text-right text-red-600">{formatMoney(archiveNum(r, 'amount'))}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'remark')}</td></tr>)}</tbody></table><div className="text-right text-gray-800 mt-2">合计：{formatMoney(paymentTotal)}</div></>
               }
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">8. 其它金额记录</h3>
+                    <h3 className="text-gray-800 font-medium">7. 其它金额记录</h3>
                     <button onClick={() => {setShowAddModal('deposit');setAddForm({});}} className="px-3 py-1 bg-blue-600 text-white text-sm rounded flex items-center gap-1"><FaPlus /> 添加</button>
                   </div>
                   {depositRecords.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-right py-2 px-2">项目保证金</th><th className="text-left py-2 px-2">备注</th><th className="text-right py-2 px-2">工程投标保证金</th><th className="text-left py-2 px-2">备注</th><th className="text-right py-2 px-2">质量保证金</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{depositRecords.map((r, i) => <tr key={archiveStr(r, 'id') || `dr-${i}`} className="border-b border-gray-100"><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-right text-yellow-600">{archiveNum(r, 'bid_bond') ? formatMoney(archiveNum(r, 'bid_bond')) : '-'}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'bid_bond_remark')}</td><td className="py-2 px-2 text-right text-yellow-600">{archiveNum(r, 'performance_bond') ? formatMoney(archiveNum(r, 'performance_bond')) : '-'}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'performance_bond_remark')}</td><td className="py-2 px-2 text-right text-yellow-600">{archiveNum(r, 'quality_bond') ? formatMoney(archiveNum(r, 'quality_bond')) : '-'}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'quality_bond_remark')}</td></tr>)}</tbody></table>
+              <table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-gray-500"><th className="text-left py-2 px-2">序号</th><th className="text-right py-2 px-2">项目保证金</th><th className="text-left py-2 px-2">备注</th><th className="text-right py-2 px-2">工程投标保证金</th><th className="text-left py-2 px-2">备注</th><th className="text-right py-2 px-2">质量保证金</th><th className="text-left py-2 px-2">备注</th></tr></thead><tbody>{depositRecords.map((r, i) => <tr key={archiveStr(r, 'id') || `dr-${i}`} className="border-b border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'deposit', data: r })}><td className="py-2 px-2 text-gray-700">{i + 1}</td><td className="py-2 px-2 text-right text-yellow-600">{archiveNum(r, 'bid_bond') ? formatMoney(archiveNum(r, 'bid_bond')) : '-'}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'bid_bond_remark')}</td><td className="py-2 px-2 text-right text-yellow-600">{archiveNum(r, 'performance_bond') ? formatMoney(archiveNum(r, 'performance_bond')) : '-'}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'performance_bond_remark')}</td><td className="py-2 px-2 text-right text-yellow-600">{archiveNum(r, 'quality_bond') ? formatMoney(archiveNum(r, 'quality_bond')) : '-'}</td><td className="py-2 px-2 text-gray-700">{archiveDisplay(r, 'quality_bond_remark')}</td></tr>)}</tbody></table>
               }
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-gray-800 font-medium">9. 其它事项记录</h3>
+                    <h3 className="text-gray-800 font-medium">8. 其它事项记录</h3>
                     <button onClick={() => {setShowAddModal('matters');setAddForm({});}} className="px-3 py-1 bg-blue-600 text-white text-sm rounded flex items-center gap-1"><FaPlus /> 添加</button>
                   </div>
                   {otherMatters.length === 0 ? <div className="text-gray-500 text-center py-4">暂无数据</div> :
-              <div className="space-y-2">{otherMatters.map((r, idx) => <div key={archiveStr(r, 'id') || `om-${idx}`} className="p-3 bg-gray-50 rounded-lg text-gray-700">{archiveDisplay(r, 'content')}</div>)}</div>
+              <div className="space-y-2">{otherMatters.map((r, idx) => <div key={archiveStr(r, 'id') || `om-${idx}`} className="p-3 bg-gray-50 rounded-lg text-gray-700 cursor-pointer hover:bg-blue-50" onClick={() => setDrillRecord({ type: 'other_matter', data: r })}>{archiveDisplay(r, 'content')}</div>)}</div>
               }
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <h3 className="text-gray-800 font-medium mb-3">剩余工程款</h3>
                   <div className={`text-2xl font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>剩余工程款：{formatMoney(remaining)}</div>
-                  <div className="text-gray-500 text-sm mt-1">= 工程款收入合计 {formatMoney(incomeTotal)} - 工程款拨付合计 {formatMoney(paymentTotal)}</div>
+                  <div className="text-gray-500 text-sm mt-1">= 开票收入 {formatMoney(incomeTotal)} + 其他收入 {formatMoney(otherIncomeTotal)} - 工程款拨付 {formatMoney(paymentTotal)}</div>
                 </div>
               </>
           }
@@ -1058,7 +1072,7 @@ export default function ProjectDetail() {
             }
               <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-gray-200">
                 <button onClick={() => {setShowAddModal(null);setAddForm({});}} className="px-4 py-2 bg-gray-500 text-white rounded-lg">取消</button>
-                <button onClick={handleAddArchiveRecord} className="px-4 py-2 bg-blue-600 text-white rounded-lg">保存</button>
+                <button onClick={handleAddArchiveRecord} disabled={archiveSubmitting} className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50">{archiveSubmitting ? '保存中...' : '保存'}</button>
               </div>
             </motion.div>
           </motion.div>
@@ -1089,6 +1103,200 @@ export default function ProjectDetail() {
 
               <img src={previewFile.file_url} alt={previewFile.file_name} className="max-w-full max-h-[70vh] mx-auto rounded" />
               }
+              </div>
+            </motion.div>
+          </motion.div>
+        }
+      </AnimatePresence>
+
+      {/* === 数据穿透弹窗：档案表记录详情 === */}
+      <AnimatePresence>
+        {drillRecord &&
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setDrillRecord(null)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-gray-200 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              {/* 头部 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800">
+                  {drillRecord.type === 'seal' && '盖章记录 · 详情'}
+                  {drillRecord.type === 'income_invoice' && '开票记录（收入）· 详情'}
+                  {drillRecord.type === 'other_income' && '其他收入 · 详情'}
+                  {drillRecord.type === 'expense_invoice' && '支出发票 · 详情'}
+                  {drillRecord.type === 'payment' && '拨付记录 · 详情'}
+                  {drillRecord.type === 'deposit' && '保证金记录 · 详情'}
+                  {drillRecord.type === 'other_matter' && '其它事项 · 详情'}
+                </h3>
+                <button onClick={() => setDrillRecord(null)} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
+                  <FaTimes />
+                </button>
+              </div>
+              {/* 内容 */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                {/* 字段信息 */}
+                <div className="divide-y divide-gray-100">
+                {(() => {
+                  const labels: Record<string, string> = {
+                    borrower_name: '盖章人姓名',
+                    borrower_phone: '盖章人电话',
+                    copies: '份数',
+                    created_at: '创建时间',
+                    usage_reason: '盖章内容',
+                    usage_type: '用章类型',
+                    status: '状态',
+                    invoice_date: '发票日期',
+                    invoice_amount: '发票金额',
+                    invoice_company: '开票公司',
+                    payee: '收款人',
+                    invoice_number: '发票号码',
+                    invoice_type: '发票类型',
+                    tax_rate: '税率',
+                    income_date: '到账时间',
+                    income_amount: '收入金额',
+                    payer_name: '付款方',
+                    provider_name: '提供人',
+                    seller_name: '销售方',
+                    transfer_date: '支付时间',
+                    amount: '金额',
+                    payment_type: '付款类型',
+                    supplier_name: '收款单位',
+                    supplier_id: '供应商编号',
+                    reason: '支付事由',
+                    paid_amount: '已付金额',
+                    payment_voucher_url: '支付凭证',
+                    bid_bond: '投标保证金',
+                    bid_bond_remark: '投标保证金备注',
+                    performance_bond: '履约保证金',
+                    performance_bond_remark: '履约保证金备注',
+                    quality_bond: '质量保证金',
+                    quality_bond_remark: '质量保证金备注',
+                    content: '事项内容',
+                    remark: '备注',
+                    project_id: '项目编号',
+                    id: '记录编号',
+                    approval_id: '审批编号',
+                    invoice_id: '关联发票',
+                  };
+                  const skipFields = new Set(['project_id', 'id', 'supplier_id']);
+                  const orderedFields: Record<DrillRecordType, string[]> = {
+                    seal: ['created_at', 'usage_reason', 'copies', 'borrower_name', 'borrower_phone', 'usage_type', 'status', 'approval_id', 'id', 'project_id'],
+                    income_invoice: ['invoice_date', 'invoice_amount', 'invoice_company', 'payee', 'invoice_number', 'invoice_type', 'tax_rate', 'remark', 'status', 'created_at', 'id', 'project_id'],
+                    other_income: ['income_date', 'income_amount', 'payer_name', 'remark', 'created_at', 'id', 'project_id'],
+                    expense_invoice: ['invoice_date', 'invoice_amount', 'invoice_type', 'invoice_number', 'seller_name', 'provider_name', 'paid_amount', 'remark', 'status', 'created_at', 'id', 'project_id', 'supplier_id'],
+                    payment: ['transfer_date', 'amount', 'payment_type', 'supplier_name', 'reason', 'paid_amount', 'payment_voucher_url', 'status', 'remark', 'invoice_id', 'created_at', 'id', 'project_id', 'supplier_id'],
+                    deposit: ['bid_bond', 'bid_bond_remark', 'performance_bond', 'performance_bond_remark', 'quality_bond', 'quality_bond_remark', 'created_at', 'id', 'project_id'],
+                    other_matter: ['content', 'created_at', 'id', 'project_id'],
+                  };
+                  const fields = orderedFields[drillRecord.type] || [];
+                  return fields.map((field) => {
+                    const raw = drillRecord.data[field];
+                    const label = labels[field] || field;
+                    const value = raw == null || raw === '' ? '-' : String(raw);
+                    if (skipFields.has(field) && value === '-') return null;
+                    return <div key={field} className="flex py-3">
+                      <span className="text-gray-500 text-sm w-32 shrink-0">{label}</span>
+                      <span className="text-gray-800 text-sm flex-1 break-words">{value}</span>
+                    </div>;
+                  });
+                })()}
+                </div>
+
+                {/* 附件区域 */}
+                {(() => {
+                  const data = drillRecord.data;
+                  const type = drillRecord.type;
+                  const items: {url: string; name: string; label: string}[] = [];
+                  // 提取各类记录的附件
+                  if (type === 'seal') {
+                    const files = data['attachment_files'];
+                    if (Array.isArray(files)) {
+                      files.forEach((url: string, i: number) => {
+                        items.push({url, name: url.split('/').pop() || `盖章文件${i+1}`, label: '盖章文件'});
+                      });
+                    }
+                    const card = data['borrower_id_card_file'];
+                    if (typeof card === 'string' && card) {
+                      try {
+                        const parsed = JSON.parse(card);
+                        if (Array.isArray(parsed)) {
+                          parsed.forEach((url: string, i: number) => {
+                            items.push({url, name: url.split('/').pop() || `身份证${i+1}`, label: '身份证附件'});
+                          });
+                        } else { items.push({url: card, name: card.split('/').pop() || '身份证', label: '身份证附件'}); }
+                      } catch { items.push({url: card, name: card.split('/').pop() || '身份证', label: '身份证附件'}); }
+                    }
+                  }
+                  if (type === 'income_invoice') {
+                    const photo = data['invoice_photo'];
+                    if (typeof photo === 'string' && photo) { items.push({url: photo, name: photo.split('/').pop() || '发票照片', label: '发票照片'}); }
+                    const voucher = data['tax_payment_voucher'];
+                    if (typeof voucher === 'string' && voucher) {
+                      try {
+                        const parsed = JSON.parse(voucher);
+                        if (Array.isArray(parsed)) { parsed.forEach((url: string, i: number) => { items.push({url, name: url.split('/').pop() || `完税凭证${i+1}`, label: '完税凭证'}); }); }
+                      } catch { items.push({url: voucher, name: voucher.split('/').pop() || '完税凭证', label: '完税凭证'}); }
+                    }
+                  }
+                  if (type === 'expense_invoice') {
+                    const urls = data['attachment_urls'];
+                    if (Array.isArray(urls)) {
+                      urls.forEach((item: any, i: number) => {
+                        const url = typeof item === 'string' ? item : item?.url;
+                        if (url) { items.push({url, name: item?.filename || url.split('/').pop() || `附件${i+1}`, label: '发票附件'}); }
+                      });
+                    } else if (typeof urls === 'string' && urls) { items.push({url: urls, name: urls.split('/').pop() || '附件', label: '发票附件'}); }
+                  }
+                  if (type === 'payment') {
+                    const attUrl = data['attachment_url'];
+                    if (typeof attUrl === 'string' && attUrl) { items.push({url: attUrl, name: attUrl.split('/').pop() || '附件', label: '申请附件'}); }
+                    const voucherUrl = data['payment_voucher_url'];
+                    if (typeof voucherUrl === 'string' && voucherUrl) { items.push({url: voucherUrl, name: voucherUrl.split('/').pop() || '凭证', label: '支付凭证'}); }
+                  }
+                  if (items.length === 0) return null;
+                  return <div className="mt-6 pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                      <FaPaperclip className="text-blue-500" />
+                      附件 ({items.length})
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {items.map((att, idx) => {
+                        const ext = att.url.split('.').pop()?.toLowerCase() || '';
+                        const isImage = ['jpg','jpeg','png','gif','bmp','webp'].includes(ext);
+                        const isPdf = ext === 'pdf';
+                        return <div key={idx} className="group relative flex flex-col items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-blue-300 hover:shadow-sm">
+                          {/* 文件类型图标 */}
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-500 transition-colors">
+                            {isImage ? <FaFileImage className="w-5 h-5" /> :
+                             isPdf ? <FaFilePdf className="w-5 h-5" /> :
+                             <FaFileAlt className="w-5 h-5" />}
+                          </div>
+                          {/* 标签 */}
+                          <span className="text-[10px] text-gray-500 font-medium">{att.label}</span>
+                          {/* 文件名 */}
+                          <span className="max-w-full truncate text-[10px] text-gray-600" title={att.name}>{att.name}</span>
+                          {/* 操作按钮 */}
+                          <div className="flex gap-1.5 mt-1">
+                            {isPreviewable(att.name) && (
+                              <button onClick={() => handlePreview({file_name: att.name, file_url: att.url})} className="px-2 py-0.5 text-[10px] bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" title="预览">
+                                <FaEye className="w-3 h-3 inline mr-0.5" />预览
+                              </button>
+                            )}
+                            {!isPreviewable(att.name) && (
+                              <a href={att.url} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 text-[10px] bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" title="在新窗口打开">
+                                <FaExternalLinkAlt className="w-3 h-3 inline mr-0.5" />打开
+                              </a>
+                            )}
+                            <button onClick={() => handleDownload(att.url, att.name)} className="px-2 py-0.5 text-[10px] bg-gray-50 text-gray-600 rounded hover:bg-gray-100 transition-colors" title="下载">
+                              <FaDownload className="w-3 h-3 inline mr-0.5" />下载
+                            </button>
+                          </div>
+                        </div>;
+                      })}
+                    </div>
+                  </div>;
+                })()}
+              </div>
+              {/* 底部操作 */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+                <button onClick={() => setDrillRecord(null)} className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg">返回</button>
               </div>
             </motion.div>
           </motion.div>

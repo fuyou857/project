@@ -238,6 +238,7 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
     children: [
       { path: '/seals', icon: FaStamp, label: '用章申请' },
       { path: '/seals/project', icon: FaStamp, label: '项目盖章情况' },
+      { path: '/seals/temp', icon: FaStamp, label: '临时盖章情况' },
       { path: '/seals/borrow', icon: FaStamp, label: '印章外借情况' },
       { path: '/seals/history', icon: FaStamp, label: '历史记录' },
     ],

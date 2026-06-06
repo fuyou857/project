@@ -209,6 +209,7 @@ export async function resolveProjectIdForApprovalSource(
     expense_settlement: { table: 'expense_settlements', projectCol: 'main_contract_id', viaMain: 'expense_contracts' },
     expense_performance: { table: 'expense_performances', projectCol: 'main_contract_id', viaMain: 'expense_contracts' },
     machine_shift: { table: 'machine_shift_records', projectCol: 'project_id' },
+    seal_usage: { table: 'seal_usage_records', projectCol: 'project_id' },
   };
   const cfg = map[sourceType];
   if (!cfg) return null;

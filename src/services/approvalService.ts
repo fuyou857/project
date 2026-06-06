@@ -511,11 +511,12 @@ const SOURCE_STATUS_COLUMN_UPDATES: Partial<Record<string, SourceStatusColumnUpd
   income_settlement: { table: 'income_settlements', column: 'status', approved: '已结算', rejected: '未结算' },
   expense_settlement: { table: 'expense_settlements', column: 'status', approved: '已结算', rejected: '未结算' },
   machine_shift: { table: 'machine_shift_records', column: 'status', approved: 'confirmed', rejected: 'draft' },
+  seal_usage: { table: 'seal_usage_records', column: 'status', approved: 'borrowed', rejected: 'rejected' },
 };
 
 async function updateSourceStatus(sourceType: string, sourceId: string, status: string) {
   const config = SOURCE_STATUS_COLUMN_UPDATES[sourceType];
-  if (!config) return;
+  if (!config?.table) return;
   const targetStatus = status === 'approved' ? config.approved : config.rejected;
   await supabase.from(config.table).update({ [config.column]: targetStatus }).eq('id', sourceId);
 }

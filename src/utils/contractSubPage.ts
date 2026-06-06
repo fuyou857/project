@@ -49,7 +49,7 @@ export async function tryCreateApproval(
   if (modalResult !== null) return modalResult;
 
   try {
-    const row = await createApproval(sourceType, sourceId, sourceName, user.id);
+    const row = await createApproval(sourceType, sourceId, sourceName, user.id, user.name);
     if (!row) {
       console.warn(`审批未创建：未配置 ${sourceType} 审批步骤`);
       return false;
@@ -57,7 +57,7 @@ export async function tryCreateApproval(
     return true;
   } catch (approvalError) {
     console.error('审批创建失败:', approvalError);
-    return false;
+    return 'error';
   }
 }
 
