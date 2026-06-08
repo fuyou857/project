@@ -13,10 +13,8 @@ interface PartyA {
   unit_type: string;
   credit_code: string;
   bank_name: string;
-  legal_person: string;
   bank_account: string;
   phone: string;
-  remark: string;
   company_id?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -28,10 +26,8 @@ interface PartyARow {
   unit_type: string | null;
   credit_code: string | null;
   bank_name: string | null;
-  legal_person: string | null;
   bank_account: string | null;
   phone: string | null;
-  remark: string | null;
   company_id?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -43,10 +39,8 @@ const initialForm: PartyA = {
   unit_type: '建设单位',
   credit_code: '',
   bank_name: '',
-  legal_person: '',
   bank_account: '',
   phone: '',
-  remark: '',
 };
 
 export default function PartyAList() {
@@ -83,10 +77,8 @@ export default function PartyAList() {
         unit_type: item.unit_type || '',
         credit_code: item.credit_code || '',
         bank_name: item.bank_name || '',
-        legal_person: item.legal_person || '',
         bank_account: item.bank_account || '',
         phone: item.phone || '',
-        remark: item.remark || '',
       }));
       setList(mapped as PartyA[]);
     }
@@ -114,10 +106,8 @@ export default function PartyAList() {
       unit_type: item.unit_type || '',
       credit_code: item.credit_code || '',
       bank_name: item.bank_name || '',
-      legal_person: item.legal_person || '',
       bank_account: item.bank_account || '',
       phone: item.phone || '',
-      remark: item.remark || '',
     });
     setShowModal(true);
   }
@@ -130,15 +120,14 @@ export default function PartyAList() {
     }
 
     const data = {
-      name: form.name,
-      unit_type: form.unit_type,
-      credit_code: form.credit_code,
-      bank_name: form.bank_name,
-      legal_person: form.legal_person,
-      bank_account: form.bank_account,
-      phone: form.phone,
-      remark: form.remark,
-    };
+    name: form.name,
+    unit_type: form.unit_type,
+    credit_code: form.credit_code,
+    bank_name: form.bank_name,
+    bank_account: form.bank_account,
+    phone: form.phone,
+    address: '', // 添加 address 字段
+  };
 
     if (editingId) {
       await supabase.from('party_a').update(data).eq('id', editingId);
@@ -324,15 +313,6 @@ export default function PartyAList() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">法定代表人</label>
-                  <input
-                    type="text"
-                    value={form.legal_person}
-                    onChange={e => setForm({ ...form, legal_person: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm text-gray-500 mb-2">开户银行</label>
                   <input
                     type="text"
@@ -341,9 +321,6 @@ export default function PartyAList() {
                     className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">银行账号</label>
                   <input
@@ -353,16 +330,6 @@ export default function PartyAList() {
                     className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-500 mb-2">备注</label>
-                <textarea
-                  value={form.remark}
-                  onChange={e => setForm({ ...form, remark: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800"
-                  rows={3}
-                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4">

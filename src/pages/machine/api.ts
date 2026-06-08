@@ -193,7 +193,19 @@ export const machineApi = {
       .range(offset, offset + page_size - 1);
 
     if (keyword) {
-      query = query.or(`machines.name.ilike.%${keyword}%,machines.code.ilike.%${keyword}%`);
+      // 先查询匹配的机械 ID
+      const { data: matchedMachines } = await supabase
+        .from('machines')
+        .select('id')
+        .or(`name.ilike.%${keyword}%,code.ilike.%${keyword}%`);
+      const machineIds = matchedMachines?.map(m => m.id) || [];
+      
+      if (machineIds.length > 0) {
+        query = query.in('machine_id', machineIds);
+      } else {
+        // 没有匹配的机械，返回空结果
+        return { data: [], total: 0, page, page_size, total_pages: 0 };
+      }
     }
     if (project_id) {
       query = query.eq('project_id', project_id);

@@ -22,6 +22,7 @@ import { getUsers } from '../../services/userService';
 import { useSingleToast } from '../../hooks/useSingleToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import SingleToastBanner from '../../components/ui/SingleToastBanner';
+import { readExcelWithValidation } from '../../utils/excelSheet';
 
 interface ImportRow {
   rowIndex: number;
@@ -94,18 +95,13 @@ export default function Projects() {
   }, [page, debouncedSearch, currentCompany]);
 
   async function fetchPartyAList() {
-    const companyIds = getCompanyIds();
-    // party_a表可能没有company_id字段，通过projects表的party_a_id进行连接查询
-    const { data: partyAData } = await supabase.from('projects')
-      .select('party_a_id, party_a!inner(id, name)')
-      .in('company_id', companyIds)
-      .order('party_a.name');
+    // 直接从 party_a 表查询，不依赖 projects 表
+    const { data: partyAData } = await supabase.from('party_a').select('id, name');
     if (partyAData) {
-      // 去重并提取party_a数据
-      const uniquePartyA = Array.from(new Map(
-        partyAData.map(item => [(item.party_a as unknown as PartyA).id, item.party_a as unknown as PartyA])
-      )).map(([_, partyA]) => partyA);
-      setPartyAList(uniquePartyA);
+      const uniquePartyA = [...partyAData];
+      // 按 name 排序
+      uniquePartyA.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      setPartyAList(uniquePartyA as PartyA[]);
     }
   }
 
@@ -200,18 +196,8 @@ export default function Projects() {
     const newErrors: ProjectErrors = {};
     if (!form.project_code?.trim()) newErrors.project_code = '请输入项目编号';
     if (!form.name?.trim()) newErrors.name = '请输入项目名称';
-    if (!form.bid_amount) newErrors.bid_amount = '请输入项目金额';
-    if (!form.duration) newErrors.duration = '请输入项目工期';
     if (!form.start_date) newErrors.start_date = '请选择开工时间';
-    if (!form.end_date) newErrors.end_date = '请选择竣工时间';
-    if (!form.tax_rate) newErrors.tax_rate = '请输入综合税率';
-    if (!form.project_manager?.trim()) newErrors.project_manager = '请输入项目负责人';
-    if (!form.manager_phone?.trim()) newErrors.manager_phone = '请输入负责人电话';
-    if (!form.manager_id_card_url?.trim()) newErrors.manager_id_card_url = '请上传负责人身份证';
     if (!form.party_a_id) newErrors.party_a_id = '请选择建设单位';
-    if (!form.stamp_person?.trim()) newErrors.stamp_person = '请输入盖章人';
-    if (!form.stamp_person_phone?.trim()) newErrors.stamp_person_phone = '请输入盖章人电话';
-    if (!form.stamp_authorization_url?.trim()) newErrors.stamp_authorization_url = '请上传委托书';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -223,27 +209,13 @@ export default function Projects() {
 
     const companyIds = getCompanyIds();
     const data: Record<string, any> = {
-      project_code: form.project_code || '',
       name: form.name || '',
-      bid_amount: form.bid_amount ?? null,
-      duration: form.duration ? String(form.duration) : null,
-      start_date: form.start_date || '',
-      end_date: form.end_date || '',
-      tender_method: form.tender_method || 'public_tender',
-      management_fee_rate: form.management_fee_rate ?? null,
-      cost_ticket_rate: form.cost_ticket_rate ?? null,
-      management_fee_amount: form.management_fee_amount ?? null,
-      tax_rate: form.tax_rate ?? null,
-      project_manager: form.project_manager || '',
-      manager_phone: form.manager_phone || '',
-      manager_id_card_url: form.manager_id_card_url || '',
-      party_a_id: form.party_a_id || null,
-      party_a_contact: form.party_a_contact || '',
-      stamp_person: form.stamp_person || '',
-      stamp_person_phone: form.stamp_person_phone || '',
-      stamp_authorization_url: form.stamp_authorization_url || '',
-      status: form.status || 'not_started',
+      code: form.project_code || '',
       company_id: companyIds[0],
+      party_a_id: form.party_a_id || null,
+      start_date: form.start_date || null,
+      end_date: form.end_date || null,
+      status: form.status || 'active',
     };
 
     try {
@@ -473,29 +445,25 @@ export default function Projects() {
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !currentCompany) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
-        
-        if (jsonData.length === 0) {
-          showToast('error', 'Excel文件为空');
-          return;
-        }
-        
-        const companyIds = getCompanyIds();
-        // party_a表可能没有company_id字段，通过projects表的party_a_id进行连接查询
-        const { data: partyAData } = await supabase.from('projects')
-          .select('party_a_id, party_a!inner(id, name)')
-          .in('company_id', companyIds)
-          .order('party_a.name');
-        // 去重并提取party_a数据
-        const uniquePartyA = Array.from(new Map(
-          partyAData?.map(item => [(item.party_a as unknown as PartyA).id, item.party_a as unknown as PartyA]) || []
-        )).map(([_, partyA]) => partyA);
+    
+    // 使用增强版 Excel 读取函数
+    const result = await readExcelWithValidation(file);
+    
+    if (!result.success) {
+      showToast('error', result.error?.message || '读取Excel文件失败');
+      if (e.target) e.target.value = '';
+      return;
+    }
+    
+    const jsonData = result.data!;
+    
+    try {
+        // 直接从 party_a 表查询，不依赖 projects 表
+        const { data: partyAData } = await supabase.from('party_a').select('id, name');
+        // 使用所有 party_a 数据
+        const uniquePartyA = [...(partyAData || [])];
+        // 按 name 排序
+        uniquePartyA.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         const partyAMap = new Map((uniquePartyA || []).map(p => [p.name, p.id]));
         
         const previewRows: ImportRow[] = [];
@@ -526,10 +494,9 @@ export default function Projects() {
         });
         setShowImportPreview(true);
       } catch (err: any) {
-        showToast('error', '解析Excel失败：' + (err.message || ''));
+        showToast('error', '处理Excel数据失败：' + (err.message || ''));
       }
-    };
-    reader.readAsBinaryString(file);
+    
     if (e.target) e.target.value = '';
   }
 
@@ -537,7 +504,8 @@ export default function Projects() {
     if (!importPreview || !currentCompany) return;
     setImporting(true);
     const companyIds = getCompanyIds();
-    const { data: partyAData } = await supabase.from('party_a').select('id, name').in('company_id', companyIds);
+    // 直接从 party_a 表查询，不依赖 company_id 字段
+    const { data: partyAData } = await supabase.from('party_a').select('id, name');
     const partyAMap = new Map((partyAData || []).map(p => [p.name, p.id]));
     
     const validRows = importPreview.rows.filter(r => r.selected && !r.error);
@@ -546,28 +514,27 @@ export default function Projects() {
     
     for (const row of validRows) {
       try {
-        const tenderMethod = row.data.招标方式 === '公开招标' ? 'public_tender' : 'direct_contract';
-        const statusMap: Record<string, string> = { '未开工': 'not_started', '进行中': 'in_progress', '已完工': 'completed' };
+        const statusMap: Record<string, string> = { '未开工': 'active', '进行中': 'active', '已完工': 'completed' };
         
-        await supabase.from('projects').insert({
-          project_code: row.data.项目编号 || '',
+        const insertData: Record<string, any> = {
           name: row.data.项目名称 || '',
-          bid_amount: Number(row.data.项目金额) || 0,
-          duration: String(row.data['工期（天）'] || ''),
-          start_date: row.data.开工时间 || '',
-          end_date: row.data.合同竣工时间 || '',
-          tender_method: tenderMethod,
-          management_fee_rate: row.data.管理费比例 ? Number(row.data.管理费比例) : null,
-          cost_ticket_rate: row.data.成本票比例 ? Number(row.data.成本票比例) : null,
-          tax_rate: row.data.综合税率 ? Number(row.data.综合税率) : null,
-          project_manager: row.data.项目负责人 || '',
-          manager_phone: row.data.负责人电话 || '',
-          party_a_id: row.data.建设单位 ? partyAMap.get(row.data.建设单位) || null : null,
-          status: statusMap[row.data.状态 || '未开工'] || 'not_started',
+          code: row.data.项目编号 || '',
           company_id: companyIds[0],
-        } as any);
+          party_a_id: row.data.建设单位 ? partyAMap.get(row.data.建设单位) || null : null,
+          start_date: row.data.开工时间 || null,
+          end_date: row.data.合同竣工时间 || null,
+          status: statusMap[row.data.状态 || '未开工'] || 'active',
+        };
+        
+        console.log('Inserting project:', insertData);
+        const { error } = await supabase.from('projects').insert(insertData as any);
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
         successCount++;
       } catch (err) {
+        console.error('Error importing row:', row.data, err);
         errorCount++;
       }
     }
@@ -700,8 +667,6 @@ export default function Projects() {
             onChange={setForm}
             onErrorsChange={setErrors}
             onSubmit={handleSubmit}
-            onManagerIdCardUpload={handleManagerIdCardUpload}
-            onStampAuthUpload={handleStampAuthUpload}
             onPartyARefresh={fetchPartyAList}
           />
         )}

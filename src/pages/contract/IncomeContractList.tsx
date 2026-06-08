@@ -19,7 +19,7 @@ import { projectSelectOptions } from '../../components/ui/options';
 import { useSingleToast } from '../../hooks/useSingleToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useContractReminders } from '../../hooks/useContractReminders';
-import { readExcelFirstSheetRows, downloadJsonRowsAsXlsx } from '../../utils/excelSheet';
+import { readExcelFirstSheetRows, downloadJsonRowsAsXlsx, readExcelWithValidation } from '../../utils/excelSheet';
 import {
   contractApprovalStatusClass,
   contractApprovalStatusLabel,
@@ -190,9 +190,19 @@ export default function IncomeContractList() {
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // 使用增强版 Excel 读取函数
+    const result = await readExcelWithValidation(file);
+    
+    if (!result.success) {
+      showToast('error', result.error?.message || '读取Excel文件失败');
+      e.target.value = '';
+      return;
+    }
+    
+    const json = result.data!;
+    
     try {
-        const json = await readExcelFirstSheetRows(file);
-        if (!json.length) {showToast('error', 'Excel文件为空');return;}
         const errors: string[] = [];
         for (let i = 0; i < json.length; i++) {
           const row = json[i];
@@ -214,7 +224,7 @@ export default function IncomeContractList() {
         fetchData();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      showToast('error', '解析Excel失败：' + msg);
+      showToast('error', '处理Excel数据失败：' + msg);
     }
     e.target.value = '';
   }

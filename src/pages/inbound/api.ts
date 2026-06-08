@@ -26,7 +26,18 @@ export const inboundApi = {
       .range(offset, offset + page_size - 1);
     
     if (keyword) {
-      query = query.or(`inbound_no.ilike.%${keyword}%,party_b(name).ilike.%${keyword}%`);
+      // 先查询匹配的供应商 ID
+      const { data: matchedSuppliers } = await supabase
+        .from('party_b')
+        .select('id')
+        .ilike('name', `%${keyword}%`);
+      const supplierIds = matchedSuppliers?.map(s => s.id) || [];
+      
+      if (supplierIds.length > 0) {
+        query = query.or(`inbound_no.ilike.%${keyword}%,supplier_id.in.(${supplierIds.join(',')})`);
+      } else {
+        query = query.ilike('inbound_no', `%${keyword}%`);
+      }
     }
     
     if (project_id) {

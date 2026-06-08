@@ -6,10 +6,10 @@ import { SegmentedControl } from '../components/ui';
 import EmptyState from '../components/ui/EmptyState';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
-interface PartyA { id: string; name: string; unit_type: string; credit_code: string; legal_representative: string; phone: string; address: string; created_at: string; remark?: string | null; }
+interface PartyA { id: string; name: string; unit_type: string; credit_code: string; phone: string; address: string; created_at: string; }
 const PAGE_SIZE = 15;
 
-const initialForm = { name: '', unit_type: '房地产', credit_code: '', legal_representative: '', phone: '', address: '', remark: '' };
+const initialForm = { name: '', unit_type: '房地产', credit_code: '', phone: '', address: '' };
 
 export default function PartyA() {
   const [data, setData] = useState<PartyA[]>([]);
@@ -60,7 +60,7 @@ export default function PartyA() {
 
   function showToast(type: string, message: string) { setToast({ type, message }); setTimeout(() => setToast(null), 3000); }
 
-  function openEdit(item: PartyA) { setEditing(item); setForm({ name: item.name, unit_type: item.unit_type, credit_code: item.credit_code, legal_representative: item.legal_representative, phone: item.phone, address: item.address, remark: item.remark ?? '' }); setErrors({}); setShowModal(true); }
+  function openEdit(item: PartyA) { setEditing(item); setForm({ name: item.name, unit_type: item.unit_type, credit_code: item.credit_code, phone: item.phone, address: item.address }); setErrors({}); setShowModal(true); }
   function openAdd() { setEditing(null); setForm(initialForm); setErrors({}); setShowModal(true); }
   function handleCloseModal() { setShowModal(false); setForm(initialForm); setEditing(null); setErrors({}); }
   function confirmDelete(id: string) { setDeleteId(id); setShowDelete(true); }
@@ -97,11 +97,11 @@ export default function PartyA() {
       </div>
       <div className="ui-table-wrap overflow-hidden rounded-xl border border-gray-200 bg-white">
         <table className="w-full border-collapse">
-          <thead className="bg-gray-50"><tr className="text-gray-700 text-sm"><th className="text-left py-3 px-4">单位名称</th><th className="text-left py-3 px-4">单位类型</th><th className="text-left py-3 px-4">社会信用代码</th><th className="text-left py-3 px-4">联系人</th><th className="text-left py-3 px-4">联系电话</th><th className="text-left py-3 px-4">创建时间</th><th className="text-center py-3 px-4">操作</th></tr></thead>
+          <thead className="bg-gray-50"><tr className="text-gray-700 text-sm"><th className="text-left py-3 px-4">单位名称</th><th className="text-left py-3 px-4">单位类型</th><th className="text-left py-3 px-4">社会信用代码</th><th className="text-left py-3 px-4">联系电话</th><th className="text-left py-3 px-4">创建时间</th><th className="text-center py-3 px-4">操作</th></tr></thead>
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <EmptyState title="暂无甲方单位" description="可点击右上角新增甲方单位" />
                 </td>
               </tr>
@@ -111,7 +111,6 @@ export default function PartyA() {
                   <td className="py-3 px-4 font-medium text-gray-800">{item.name}</td>
                   <td className="py-3 px-4 text-gray-700">{item.unit_type || '-'}</td>
                   <td className="py-3 px-4 text-sm text-gray-500">{item.credit_code || '-'}</td>
-                  <td className="py-3 px-4 text-gray-700">{item.legal_representative || '-'}</td>
                   <td className="py-3 px-4 text-gray-700">{item.phone || '-'}</td>
                   <td className="py-3 px-4 text-sm text-gray-500">{item.created_at?.slice(0, 10) || '-'}</td>
                   <td className="py-3 px-4 text-center">
@@ -137,22 +136,20 @@ export default function PartyA() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div><label className="block text-sm text-gray-500 mb-2">单位名称 *</label><input type="text" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} className={`w-full px-4 py-2 bg-gray-50 border rounded-lg text-gray-800 ${errors.name ? 'border-red-500' : 'border-slate-600'}`} />{errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}</div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="ui-label mb-2 block">单位类型</label>
-                    <SegmentedControl
-                      value={(form.unit_type || '房地产') as '房地产' | '政府' | '企业' | '其他'}
-                      onChange={v => setForm({ ...form, unit_type: v })}
-                      options={[...unitTypeOptions]}
-                    />
-                  </div>
-                  <div><label className="block text-sm text-gray-500 mb-2">社会信用代码</label><input type="text" value={form.credit_code || ''} onChange={e => setForm({ ...form, credit_code: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
+                <div>
+                  <label className="ui-label mb-2 block">单位类型</label>
+                  <SegmentedControl
+                    value={(form.unit_type || '房地产') as '房地产' | '政府' | '企业' | '其他'}
+                    onChange={v => setForm({ ...form, unit_type: v })}
+                    options={[...unitTypeOptions]}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-sm text-gray-500 mb-2">联系人</label><input type="text" value={form.legal_representative || ''} onChange={e => setForm({ ...form, legal_representative: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
-                  <div><label className="block text-sm text-gray-500 mb-2">联系电话</label><input type="text" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} className={`w-full px-4 py-2 bg-gray-50 border rounded-lg text-gray-800 ${errors.phone ? 'border-red-500' : 'border-slate-600'}`} />{errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}</div>
-                </div>
-                <div><label className="block text-sm text-gray-500 mb-2">地址</label><input type="text" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
-                <div><label className="block text-sm text-gray-500 mb-2">备注</label><textarea value={form.remark || ''} onChange={e => setForm({ ...form, remark: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" rows={2} /></div>
+                <div><label className="block text-sm text-gray-500 mb-2">社会信用代码</label><input type="text" value={form.credit_code || ''} onChange={e => setForm({ ...form, credit_code: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-sm text-gray-500 mb-2">联系电话</label><input type="text" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} className={`w-full px-4 py-2 bg-gray-50 border rounded-lg text-gray-800 ${errors.phone ? 'border-red-500' : 'border-slate-600'}`} />{errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}</div>
+              </div>
+              <div><label className="block text-sm text-gray-500 mb-2">地址</label><input type="text" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-slate-600 rounded-lg text-gray-800" /></div>
                 <div className="flex justify-end gap-3 pt-4">
                   <button type="button" onClick={handleCloseModal} className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">
                     取消

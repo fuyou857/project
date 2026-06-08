@@ -249,29 +249,31 @@ export default function IncomeInvoiceIssue() {
 
     try {
       const payload = {
-        project_id: form.project_id,
-        company_id: resolvedCompanyId,
-        buyer_id: form.party_a_id || null,
-        invoice_type: form.invoice_type,
-        tax_rate: form.tax_rate,
-        buyer_name: form.buyer_name,
-        buyer_tax_no: form.buyer_tax_no,
-        buyer_bank: form.buyer_bank,
-        buyer_account: form.buyer_account,
-        buyer_address_phone: form.buyer_address_phone,
-        invoice_amount: form.invoice_amount,
-        tax_amount: form.tax_amount,
-        remark: form.remark,
-        tax_paid: form.tax_paid,
-        tax_payment_method: form.tax_payment_method,
-        tax_payment_voucher: form.tax_payment_voucher.join(','),
-        invoice_photo: form.invoice_photo.join(','),
-        payment_description: form.payment_description,
-        status: '待审核'
-      };
+    project_id: form.project_id,
+    company_id: resolvedCompanyId,
+    invoice_type: form.invoice_type,
+    tax_rate: form.tax_rate,
+    buyer_name: form.buyer_name,
+    buyer_tax_no: form.buyer_tax_no,
+    buyer_bank: form.buyer_bank,
+    buyer_account: form.buyer_account,
+    buyer_address_phone: form.buyer_address_phone,
+    invoice_amount: form.invoice_amount,
+    amount: form.invoice_amount,
+    tax_amount: form.tax_amount,
+    remark: form.remark,
+    tax_paid: form.tax_paid,
+    tax_payment_method: form.tax_payment_method,
+    tax_payment_voucher: form.tax_payment_voucher.join(','),
+    invoice_photo: form.invoice_photo.join(','),
+    payment_description: form.payment_description,
+    status: 'pending',
+    invoice_date: new Date().toISOString().split('T')[0]
+  };
 
-      const { error: invoiceError } = await supabase.from('income_invoices').insert(payload);
+      const { data: insertData, error: invoiceError } = await supabase.from('income_invoices').insert(payload).select();
       if (invoiceError) {
+        console.error('[IncomeInvoiceIssue] insert error details:', JSON.stringify(invoiceError));
         throw new Error('保存发票失败: ' + invoiceError.message);
       }
 

@@ -312,7 +312,7 @@ export default function IncomeInvoiceList() {
               }}
               options={[
               { value: '', label: '全部' },
-              { value: '待审核', label: '待审核' },
+              { value: 'pending', label: '待审核' },
               { value: '已审核', label: '已审核' }]
               }
               placeholder="全部"
@@ -359,7 +359,7 @@ export default function IncomeInvoiceList() {
                       <td className="py-3 text-gray-600">{inv.tax_rate}%</td>
                       <td className="py-3 text-gray-600">{inv.invoice_amount?.toFixed(2)}</td>
                       <td className="py-3 text-gray-600">{inv.tax_amount?.toFixed(2)}</td>
-                      <td className="py-3"><span className={`px-2 py-1 text-xs rounded-full ${inv.status === '已审核' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{inv.status}</span></td>
+                      <td className="py-3"><span className={`px-2 py-1 text-xs rounded-full ${inv.status === '已审核' ? 'bg-green-100 text-green-700' : inv.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>{inv.status === 'pending' ? '待审核' : inv.status}</span></td>
                       <td className="py-3 text-gray-600">{inv.invoice_date?.split('T')[0]}</td>
                       <td className="py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -476,10 +476,10 @@ export default function IncomeInvoiceList() {
                     <input type="number" value={editForm.tax_amount} onChange={(e) => setEditForm({ ...editForm, tax_amount: parseFloat(e.target.value) })} className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800" /></div>
                   <div><label className="block text-sm text-gray-600 mb-1">状态</label>
                     <SegmentedControl
-                    value={editForm.status || '待审核'}
+                    value={editForm.status || 'pending'}
                     onChange={(v) => setEditForm({ ...editForm, status: v })}
                     options={[
-                    { value: '待审核', label: '待审核' },
+                    { value: 'pending', label: '待审核' },
                     { value: '已审核', label: '已审核' }]
                     }
                     metricsContext="page:income_invoice_list:edit_status"

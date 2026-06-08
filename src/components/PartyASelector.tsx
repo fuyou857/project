@@ -10,22 +10,18 @@ export interface PartyA {
   name: string;
   unit_type: string;
   credit_code: string;
-  legal_person: string;
   bank_name: string;
   bank_account: string;
   phone: string;
-  remark: string;
 }
 
 const initialPartyAForm = {
   name: '',
   unit_type: 'construction',
   credit_code: '',
-  legal_person: '',
   bank_name: '',
   bank_account: '',
   phone: '',
-  remark: '',
 };
 
 function QuickAddPartyAModal({
@@ -48,7 +44,15 @@ function QuickAddPartyAModal({
     }
     setSaving(true);
     try {
-      const { data, error } = await supabase.from('party_a').insert(form).select().single();
+      // 只插入数据库中已存在的字段
+      const insertData = {
+        name: form.name,
+        unit_type: form.unit_type,
+        credit_code: form.credit_code,
+        phone: form.phone,
+        address: '', // 添加 address 字段
+      };
+      const { data, error } = await supabase.from('party_a').insert(insertData).select().single();
       if (error) throw error;
       onSuccess(data.id, data.name);
       setForm(initialPartyAForm);
@@ -104,11 +108,11 @@ function QuickAddPartyAModal({
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-2">法人名称</label>
+          <label className="block text-sm text-gray-600 mb-2">电话</label>
           <input
             type="text"
-            value={form.legal_person}
-            onChange={(e) => setForm({ ...form, legal_person: e.target.value })}
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
             className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -132,24 +136,6 @@ function QuickAddPartyAModal({
             className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-600 mb-2">电话</label>
-        <input
-          type="text"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm text-gray-600 mb-2">备注</label>
-        <textarea
-          value={form.remark}
-          onChange={(e) => setForm({ ...form, remark: e.target.value })}
-          className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          rows={2}
-        />
       </div>
     </PartyUnitQuickAddModal>
   );
@@ -178,7 +164,7 @@ export default function PartyASelector({
     const { data, error } = await supabase
       .from('party_a')
       .select(
-        'id, name, unit_type, credit_code, legal_person, bank_name, bank_account, phone, remark',
+        'id, name, unit_type, credit_code, bank_name, bank_account, phone',
       )
       .order('created_at', { ascending: false });
     if (error) return [];

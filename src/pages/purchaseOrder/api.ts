@@ -25,7 +25,19 @@ export const purchaseOrderApi = {
       .range(offset, offset + page_size - 1);
     
     if (keyword) {
-      query = query.or(`order_no.ilike.%${keyword}%,party_b(name).ilike.%${keyword}%`);
+      // 先查询匹配的供应商 ID
+      const { data: matchedSuppliers } = await supabase
+        .from('party_b')
+        .select('id')
+        .ilike('name', `%${keyword}%`);
+      const supplierIds = matchedSuppliers?.map(s => s.id) || [];
+      
+      // 构建 or 条件：order_no 匹配 或 supplier_id 在匹配的供应商列表中
+      if (supplierIds.length > 0) {
+        query = query.or(`order_no.ilike.%${keyword}%,supplier_id.in.(${supplierIds.join(',')})`);
+      } else {
+        query = query.ilike('order_no', `%${keyword}%`);
+      }
     }
     
     if (project_id) {

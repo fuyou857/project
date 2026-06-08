@@ -26,7 +26,18 @@ export const issueApi = {
       .range(offset, offset + page_size - 1);
     
     if (keyword) {
-      query = query.or(`issue_no.ilike.%${keyword}%,projects(name).ilike.%${keyword}%`);
+      // 先查询匹配的项目 ID
+      const { data: matchedProjects } = await supabase
+        .from('projects')
+        .select('id')
+        .ilike('name', `%${keyword}%`);
+      const projectIds = matchedProjects?.map(p => p.id) || [];
+      
+      if (projectIds.length > 0) {
+        query = query.or(`issue_no.ilike.%${keyword}%,project_id.in.(${projectIds.join(',')})`);
+      } else {
+        query = query.ilike('issue_no', `%${keyword}%`);
+      }
     }
     
     if (project_id) {
